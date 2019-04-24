@@ -1,0 +1,10 @@
+runs
+falls
+breaks
+jumps
+reads
+makes
+barks
+listens
+talks
+drops

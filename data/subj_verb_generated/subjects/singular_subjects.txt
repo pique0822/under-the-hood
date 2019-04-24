@@ -1,0 +1,10 @@
+dog
+boy
+girl
+man
+woman
+ball
+toy
+cat
+bird
+phone

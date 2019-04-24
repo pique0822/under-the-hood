@@ -1,0 +1,10 @@
+run
+fall
+break
+jump
+read
+make
+bark
+listen
+talk
+drop

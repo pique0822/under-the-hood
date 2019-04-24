@@ -1,0 +1,19 @@
+Metadata-Version: 1.0
+Name: under-the-hood
+Version: 0.1.0
+Summary: UNKNOWN
+Home-page: https://github.com/Procope/under-the-hood
+Author: UNKNOWN
+Author-email: UNKNOWN
+License: GNU General Public License v3.0
+Description: # Under The Hood
+        ## Using diagnostic classifiers to investigate and improve how language models process subject-verb agreement
+        
+        
+        #### Setup
+        ```
+        cd under-the-hood
+        python setup.py install
+        ```
+        
+Platform: UNKNOWN

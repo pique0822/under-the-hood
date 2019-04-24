@@ -1,0 +1,10 @@
+dogs
+boys
+girls
+men
+women
+balls
+toys
+cats
+birds
+phones
