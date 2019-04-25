@@ -22,7 +22,11 @@ import os
 
 model_path = '../models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt'
 data_location = 'subj_verb_generated_dataset_3'
-save_location = 'subj_verb_generated_dataset_3_random_hidden'
+save_location = 'subj_verb_generated_dataset_3_random_forget'
+class_weights = None
+#[forget, input, output, cell, hidden]
+fix_gates=[True,False,False,False,False]
+fix_values=[None,None,None,None,None]
 
 if not os.path.exists(save_location):
     os.makedirs(save_location)
@@ -261,10 +265,6 @@ hidden_states_correct = {}
 
 plurality_labels_correct = {}
 
-#[forget, input, output, cell, hidden]
-fix_gates=[False,False,False,False,True]
-fix_values=[None,None,None,None,None]
-
 with open(input_path) as input_file:
     for line in input_file:
         agreement, singular, sentence = line.split('\t')
@@ -356,61 +356,66 @@ with open(input_path) as input_file:
             # uncomment to only see the first layer for testing
             # break
 
-
-train_percent = 0.30
+train_percent = 0.1
 print('\n=== PLOTTING VIZ ===')
 for lyr in range(2):
     """ FORGET GATE """
-    # correct
-    running_mean_accuracies_correct = [0]*number_of_words
-
     train_number = int(train_percent*len(forget_gates_correct[lyr]))
+
+    # correct
     training_indices = np.random.choice(range(len(forget_gates_correct[lyr])),train_number,replace=False)
 
-    fgates = np.array(forget_gates_correct[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
+    fgates_correct = np.array(forget_gates_correct[lyr])
+    fgates_correct = fgates_correct[training_indices]
+    fgates_correct = fgates_correct.reshape(train_number,-1)
 
-    labels = np.array(plurality_labels_correct[lyr])
-    labels = labels[training_indices]
+    labels_correct = np.array(plurality_labels_correct[lyr])
+    labels_correct = labels_correct[training_indices]
 
-    dc_correct = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
-
-    fgates = np.array(forget_gates_correct[lyr]).reshape(len(forget_gates_correct[lyr]),-1)
-    labels = np.array(plurality_labels_correct[lyr])
-
-    for x_idx in range(len(fgates)):
-        idx = x_idx % number_of_words
-        ct = x_idx // number_of_words
-
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_correct.predict(test_x).item()) == int(labels[x_idx].item()))
-
-        running_mean_accuracies_correct[idx] = (ct*running_mean_accuracies_correct[idx] + accurate)/(ct+1)
-    ## TODO RANDOMLY SAMPLE FROM FULL DATA TO TRAIN
     # incorrect
-    running_mean_accuracies_incorrect = [0]*number_of_words
-
     train_number = int(train_percent*len(forget_gates_incorrect[lyr]))
     training_indices = np.random.choice(range(len(forget_gates_incorrect[lyr])),train_number,replace=False)
 
-    fgates = np.array(forget_gates_incorrect[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
+    fgates_incorrect = np.array(forget_gates_incorrect[lyr])
+    fgates_incorrect = fgates_incorrect[training_indices]
+    fgates_incorrect = fgates_incorrect.reshape(train_number,-1)
 
-    labels = np.array(plurality_labels_incorrect[lyr])
-    labels = labels[training_indices]
+    labels_incorrect = np.array(plurality_labels_incorrect[lyr])
+    labels_incorrect = labels_incorrect[training_indices]
 
-    dc_incorrect = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
+    # full
+    fgates_full = np.vstack((fgates_correct,fgates_incorrect))
+    labels_full = np.append(labels_correct,labels_incorrect)
 
-    fgates = np.array(forget_gates_incorrect[lyr]).reshape(len(forget_gates_incorrect[lyr]),-1)
-    labels = np.array(plurality_labels_incorrect[lyr])
-    for x_idx in range(len(fgates)):
+    dc = sk.LogisticRegression(solver='lbfgs', max_iter=1000, class_weight=class_weights).fit(fgates_correct,labels_correct)
+
+    fgates_correct = np.array(forget_gates_correct[lyr]).reshape(len(forget_gates_correct[lyr]),-1)
+    labels = np.array(plurality_labels_correct[lyr])
+
+    #correct
+    running_mean_accuracies_correct = [0]*number_of_words
+
+    for x_idx in range(len(fgates_correct)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_incorrect.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_correct[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
+
+        running_mean_accuracies_correct[idx] = (ct*running_mean_accuracies_correct[idx] + accurate)/(ct+1)
+
+    # incorrect
+    running_mean_accuracies_incorrect = [0]*number_of_words
+
+    fgates_incorrect = np.array(forget_gates_incorrect[lyr]).reshape(len(forget_gates_incorrect[lyr]),-1)
+    labels = np.array(plurality_labels_incorrect[lyr])
+
+    for x_idx in range(len(fgates_incorrect)):
+        idx = x_idx % number_of_words
+        ct = x_idx // number_of_words
+
+        test_x = fgates_incorrect[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_incorrect[idx] = (ct*running_mean_accuracies_incorrect[idx] + accurate)/(ct+1)
 
@@ -428,58 +433,63 @@ for lyr in range(2):
     plt.savefig(save_location+'/lyr_'+str(lyr)+'_forget_gates.png')
     plt.close()
 
-
-    """ INPUT GATE """
-    # correct
-    running_mean_accuracies_correct = [0]*number_of_words
-
+    """INPUT GATE"""
     train_number = int(train_percent*len(input_gates_correct[lyr]))
+
+    # correct
     training_indices = np.random.choice(range(len(input_gates_correct[lyr])),train_number,replace=False)
 
-    fgates = np.array(input_gates_correct[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
+    fgates_correct = np.array(input_gates_correct[lyr])
+    fgates_correct = fgates_correct[training_indices]
+    fgates_correct = fgates_correct.reshape(train_number,-1)
 
+    labels_correct = np.array(plurality_labels_correct[lyr])
+    labels_correct = labels_correct[training_indices]
+
+    # incorrect
+    train_number = int(train_percent*len(input_gates_incorrect[lyr]))
+    training_indices = np.random.choice(range(len(input_gates_incorrect[lyr])),train_number,replace=False)
+
+    fgates_incorrect = np.array(input_gates_incorrect[lyr])
+    fgates_incorrect = fgates_incorrect[training_indices]
+    fgates_incorrect = fgates_incorrect.reshape(train_number,-1)
+
+    labels_incorrect = np.array(plurality_labels_incorrect[lyr])
+    labels_incorrect = labels_incorrect[training_indices]
+
+    # full
+    fgates_full = np.vstack((fgates_correct,fgates_incorrect))
+    labels_full = np.append(labels_correct,labels_incorrect)
+
+    dc = sk.LogisticRegression(solver='lbfgs', max_iter=1000, class_weight=class_weights).fit(fgates_correct,labels_correct)
+
+    fgates_correct = np.array(input_gates_correct[lyr]).reshape(len(input_gates_correct[lyr]),-1)
     labels = np.array(plurality_labels_correct[lyr])
-    labels = labels[training_indices]
 
-    dc_correct = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
+    #correct
+    running_mean_accuracies_correct = [0]*number_of_words
 
-    fgates = np.array(input_gates_correct[lyr]).reshape(len(input_gates_correct[lyr]),-1)
-    labels = np.array(plurality_labels_correct[lyr])
-
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_correct)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_correct.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_correct[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_correct[idx] = (ct*running_mean_accuracies_correct[idx] + accurate)/(ct+1)
 
     # incorrect
     running_mean_accuracies_incorrect = [0]*number_of_words
 
-    train_number = int(train_percent*len(input_gates_incorrect[lyr]))
-    training_indices = np.random.choice(range(len(input_gates_incorrect[lyr])),train_number,replace=False)
-
-    fgates = np.array(input_gates_incorrect[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
-
+    fgates_incorrect = np.array(input_gates_incorrect[lyr]).reshape(len(input_gates_incorrect[lyr]),-1)
     labels = np.array(plurality_labels_incorrect[lyr])
-    labels = labels[training_indices]
 
-    dc_incorrect = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
-
-    fgates = np.array(input_gates_incorrect[lyr]).reshape(len(input_gates_incorrect[lyr]),-1)
-    labels = np.array(plurality_labels_incorrect[lyr])
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_incorrect)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_incorrect.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_incorrect[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_incorrect[idx] = (ct*running_mean_accuracies_incorrect[idx] + accurate)/(ct+1)
 
@@ -497,57 +507,63 @@ for lyr in range(2):
     plt.savefig(save_location+'/lyr_'+str(lyr)+'_input_gates.png')
     plt.close()
 
-    """ OUTPUT GATE """
-    # correct
-    running_mean_accuracies_correct = [0]*number_of_words
-
+    """OUTPUT"""
     train_number = int(train_percent*len(output_gates_correct[lyr]))
+
+    # correct
     training_indices = np.random.choice(range(len(output_gates_correct[lyr])),train_number,replace=False)
 
-    fgates = np.array(output_gates_correct[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
+    fgates_correct = np.array(output_gates_correct[lyr])
+    fgates_correct = fgates_correct[training_indices]
+    fgates_correct = fgates_correct.reshape(train_number,-1)
 
+    labels_correct = np.array(plurality_labels_correct[lyr])
+    labels_correct = labels_correct[training_indices]
+
+    # incorrect
+    train_number = int(train_percent*len(output_gates_incorrect[lyr]))
+    training_indices = np.random.choice(range(len(output_gates_incorrect[lyr])),train_number,replace=False)
+
+    fgates_incorrect = np.array(output_gates_incorrect[lyr])
+    fgates_incorrect = fgates_incorrect[training_indices]
+    fgates_incorrect = fgates_incorrect.reshape(train_number,-1)
+
+    labels_incorrect = np.array(plurality_labels_incorrect[lyr])
+    labels_incorrect = labels_incorrect[training_indices]
+
+    # full
+    fgates_full = np.vstack((fgates_correct,fgates_incorrect))
+    labels_full = np.append(labels_correct,labels_incorrect)
+
+    dc = sk.LogisticRegression(solver='lbfgs', max_iter=1000, class_weight=class_weights).fit(fgates_correct,labels_correct)
+
+    fgates_correct = np.array(output_gates_correct[lyr]).reshape(len(output_gates_correct[lyr]),-1)
     labels = np.array(plurality_labels_correct[lyr])
-    labels = labels[training_indices]
 
-    dc_correct = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
+    #correct
+    running_mean_accuracies_correct = [0]*number_of_words
 
-    fgates = np.array(output_gates_correct[lyr]).reshape(len(output_gates_correct[lyr]),-1)
-    labels = np.array(plurality_labels_correct[lyr])
-
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_correct)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_correct.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_correct[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_correct[idx] = (ct*running_mean_accuracies_correct[idx] + accurate)/(ct+1)
 
     # incorrect
     running_mean_accuracies_incorrect = [0]*number_of_words
 
-    train_number = int(train_percent*len(output_gates_incorrect[lyr]))
-    training_indices = np.random.choice(range(len(output_gates_incorrect[lyr])),train_number,replace=False)
-
-    fgates = np.array(output_gates_incorrect[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
-
+    fgates_incorrect = np.array(output_gates_incorrect[lyr]).reshape(len(output_gates_incorrect[lyr]),-1)
     labels = np.array(plurality_labels_incorrect[lyr])
-    labels = labels[training_indices]
 
-    dc_incorrect = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
-
-    fgates = np.array(output_gates_incorrect[lyr]).reshape(len(output_gates_incorrect[lyr]),-1)
-    labels = np.array(plurality_labels_incorrect[lyr])
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_incorrect)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_incorrect.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_incorrect[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_incorrect[idx] = (ct*running_mean_accuracies_incorrect[idx] + accurate)/(ct+1)
 
@@ -565,57 +581,63 @@ for lyr in range(2):
     plt.savefig(save_location+'/lyr_'+str(lyr)+'_output_gates.png')
     plt.close()
 
-    """ CELL GATE """
-    # correct
-    running_mean_accuracies_correct = [0]*number_of_words
-
+    """CELL STATE"""
     train_number = int(train_percent*len(cell_states_correct[lyr]))
+
+    # correct
     training_indices = np.random.choice(range(len(cell_states_correct[lyr])),train_number,replace=False)
 
-    fgates = np.array(cell_states_correct[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
+    fgates_correct = np.array(cell_states_correct[lyr])
+    fgates_correct = fgates_correct[training_indices]
+    fgates_correct = fgates_correct.reshape(train_number,-1)
 
+    labels_correct = np.array(plurality_labels_correct[lyr])
+    labels_correct = labels_correct[training_indices]
+
+    # incorrect
+    train_number = int(train_percent*len(cell_states_incorrect[lyr]))
+    training_indices = np.random.choice(range(len(cell_states_incorrect[lyr])),train_number,replace=False)
+
+    fgates_incorrect = np.array(cell_states_incorrect[lyr])
+    fgates_incorrect = fgates_incorrect[training_indices]
+    fgates_incorrect = fgates_incorrect.reshape(train_number,-1)
+
+    labels_incorrect = np.array(plurality_labels_incorrect[lyr])
+    labels_incorrect = labels_incorrect[training_indices]
+
+    # full
+    fgates_full = np.vstack((fgates_correct,fgates_incorrect))
+    labels_full = np.append(labels_correct,labels_incorrect)
+
+    dc = sk.LogisticRegression(solver='lbfgs', max_iter=1000, class_weight=class_weights).fit(fgates_correct,labels_correct)
+
+    fgates_correct = np.array(cell_states_correct[lyr]).reshape(len(cell_states_correct[lyr]),-1)
     labels = np.array(plurality_labels_correct[lyr])
-    labels = labels[training_indices]
 
-    dc_correct = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
+    #correct
+    running_mean_accuracies_correct = [0]*number_of_words
 
-    fgates = np.array(cell_states_correct[lyr]).reshape(len(cell_states_correct[lyr]),-1)
-    labels = np.array(plurality_labels_correct[lyr])
-
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_correct)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_correct.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_correct[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_correct[idx] = (ct*running_mean_accuracies_correct[idx] + accurate)/(ct+1)
 
     # incorrect
     running_mean_accuracies_incorrect = [0]*number_of_words
 
-    train_number = int(train_percent*len(cell_states_incorrect[lyr]))
-    training_indices = np.random.choice(range(len(cell_states_incorrect[lyr])),train_number,replace=False)
-
-    fgates = np.array(cell_states_incorrect[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
-
+    fgates_incorrect = np.array(cell_states_incorrect[lyr]).reshape(len(cell_states_incorrect[lyr]),-1)
     labels = np.array(plurality_labels_incorrect[lyr])
-    labels = labels[training_indices]
 
-    dc_incorrect = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
-
-    fgates = np.array(cell_states_incorrect[lyr]).reshape(len(cell_states_incorrect[lyr]),-1)
-    labels = np.array(plurality_labels_incorrect[lyr])
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_incorrect)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_incorrect.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_incorrect[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_incorrect[idx] = (ct*running_mean_accuracies_incorrect[idx] + accurate)/(ct+1)
 
@@ -624,7 +646,7 @@ for lyr in range(2):
 
     plt.plot(range(number_of_words),running_mean_accuracies_incorrect,color='#2980b9')
     plt.scatter(range(number_of_words),running_mean_accuracies_incorrect,color='#2980b9',label='Incorrectly Predicted')
-    plt.title('Cell States Accuracies Over the Sentence (Layer  '+str(lyr)+')')
+    plt.title('Cell State Accuracies Over the Sentence (Layer  '+str(lyr)+')')
     plt.xlabel('Position in the Sentence')
     plt.ylabel('Mean Accuracy')
     plt.ylim((-0.05,1.05))
@@ -633,57 +655,63 @@ for lyr in range(2):
     plt.savefig(save_location+'/lyr_'+str(lyr)+'_cell_states.png')
     plt.close()
 
-    """ HIDDEN STATE """
-    # correct
-    running_mean_accuracies_correct = [0]*number_of_words
-
+    """HIDDEN STATE"""
     train_number = int(train_percent*len(hidden_states_correct[lyr]))
+
+    # correct
     training_indices = np.random.choice(range(len(hidden_states_correct[lyr])),train_number,replace=False)
 
-    fgates = np.array(hidden_states_correct[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
+    fgates_correct = np.array(hidden_states_correct[lyr])
+    fgates_correct = fgates_correct[training_indices]
+    fgates_correct = fgates_correct.reshape(train_number,-1)
 
+    labels_correct = np.array(plurality_labels_correct[lyr])
+    labels_correct = labels_correct[training_indices]
+
+    # incorrect
+    train_number = int(train_percent*len(hidden_states_incorrect[lyr]))
+    training_indices = np.random.choice(range(len(hidden_states_incorrect[lyr])),train_number,replace=False)
+
+    fgates_incorrect = np.array(hidden_states_incorrect[lyr])
+    fgates_incorrect = fgates_incorrect[training_indices]
+    fgates_incorrect = fgates_incorrect.reshape(train_number,-1)
+
+    labels_incorrect = np.array(plurality_labels_incorrect[lyr])
+    labels_incorrect = labels_incorrect[training_indices]
+
+    # full
+    fgates_full = np.vstack((fgates_correct,fgates_incorrect))
+    labels_full = np.append(labels_correct,labels_incorrect)
+
+    dc = sk.LogisticRegression(solver='lbfgs', max_iter=1000, class_weight=class_weights).fit(fgates_correct,labels_correct)
+
+    fgates_correct = np.array(hidden_states_correct[lyr]).reshape(len(hidden_states_correct[lyr]),-1)
     labels = np.array(plurality_labels_correct[lyr])
-    labels = labels[training_indices]
 
-    dc_correct = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
+    #correct
+    running_mean_accuracies_correct = [0]*number_of_words
 
-    fgates = np.array(hidden_states_correct[lyr]).reshape(len(hidden_states_correct[lyr]),-1)
-    labels = np.array(plurality_labels_correct[lyr])
-
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_correct)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_correct.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_correct[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_correct[idx] = (ct*running_mean_accuracies_correct[idx] + accurate)/(ct+1)
 
     # incorrect
     running_mean_accuracies_incorrect = [0]*number_of_words
 
-    train_number = int(train_percent*len(hidden_states_incorrect[lyr]))
-    training_indices = np.random.choice(range(len(hidden_states_incorrect[lyr])),train_number,replace=False)
-
-    fgates = np.array(hidden_states_incorrect[lyr])
-    fgates = fgates[training_indices]
-    fgates = fgates.reshape(train_number,-1)
-
+    fgates_incorrect = np.array(hidden_states_incorrect[lyr]).reshape(len(hidden_states_incorrect[lyr]),-1)
     labels = np.array(plurality_labels_incorrect[lyr])
-    labels = labels[training_indices]
 
-    dc_incorrect = sk.LogisticRegression(solver='lbfgs', max_iter=1000).fit(fgates,labels)
-
-    fgates = np.array(hidden_states_incorrect[lyr]).reshape(len(hidden_states_incorrect[lyr]),-1)
-    labels = np.array(plurality_labels_incorrect[lyr])
-    for x_idx in range(len(fgates)):
+    for x_idx in range(len(fgates_incorrect)):
         idx = x_idx % number_of_words
         ct = x_idx // number_of_words
 
-        test_x = fgates[x_idx].reshape(1,-1)
-        accurate = int(int(dc_incorrect.predict(test_x).item()) == int(labels[x_idx].item()))
+        test_x = fgates_incorrect[x_idx].reshape(1,-1)
+        accurate = int(int(dc.predict(test_x).item()) == int(labels[x_idx].item()))
 
         running_mean_accuracies_incorrect[idx] = (ct*running_mean_accuracies_incorrect[idx] + accurate)/(ct+1)
 
@@ -692,7 +720,7 @@ for lyr in range(2):
 
     plt.plot(range(number_of_words),running_mean_accuracies_incorrect,color='#2980b9')
     plt.scatter(range(number_of_words),running_mean_accuracies_incorrect,color='#2980b9',label='Incorrectly Predicted')
-    plt.title('Hidden States Accuracies Over the Sentence (Layer  '+str(lyr)+')')
+    plt.title('Hidden State Accuracies Over the Sentence (Layer  '+str(lyr)+')')
     plt.xlabel('Position in the Sentence')
     plt.ylabel('Mean Accuracy')
     plt.ylim((-0.05,1.05))

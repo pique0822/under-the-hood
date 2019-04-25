@@ -41,8 +41,12 @@ def get_probability_vector(dictionary, sentence):
 
     return probs
 
-def most_likely_continuation(dictionary, prefix, possible_conts):
-    probs = get_probability_vector(dictionary, prefix)
+def most_likely_continuation(dictionary, prefix, possible_conts, memoize = {}):
+    if prefix in memoize:
+        probs = memoize[prefix]
+    else:
+        probs = get_probability_vector(dictionary, prefix)
+        memoize[prefix] = probs
     tokenized_conts = []
     for continuation in possible_conts:
         tokenized_conts.append(tokenize_sentence(dictionary, continuation))
@@ -58,7 +62,7 @@ def most_likely_continuation(dictionary, prefix, possible_conts):
             largest_prob = prob
             largest_prob_idx = idx
 
-    return largest_prob_idx, cont_probs
+    return largest_prob_idx, cont_probs, memoize
 
 def most_likely_continuation_lists(dictionary, prefix, list_of_possible_conts):
     probs = get_probability_vector(dictionary, prefix)
@@ -102,8 +106,8 @@ ntokens = dictionary.__len__()
 device = torch.device("cuda" if cuda else "cpu")
 
 # get all verbs
-sing_verb_file = 'verbs/singular_verbs.txt'
-plu_verb_file = 'verbs/plural_verbs.txt'
+sing_verb_file = 'verbs/long_singular_verbs.txt'
+plu_verb_file = 'verbs/long_plural_verbs.txt'
 
 sing_verbs = []
 plu_verbs = []
@@ -125,6 +129,8 @@ print('COMPARE VERBS...')
 correct = []
 incorrect = []
 ct = 0
+
+memoize_prefix_prob = {}
 with open(dataset_file+'.txt','r') as data:
     for line in data:
         agreement, singular, sentence = line.split('\t')
@@ -146,7 +152,7 @@ with open(dataset_file+'.txt','r') as data:
 
         possible_conts = [plural_verb, singular_verb]
 
-        prob_idx, _ = most_likely_continuation(dictionary, prefix, possible_conts)
+        prob_idx, _, memoize_prefix_prob = most_likely_continuation(dictionary, prefix, possible_conts, memoize_prefix_prob)
 
         # if prob_idx == singular then the model agrees with the sentence
         # otherwise it would incorrectly classify them

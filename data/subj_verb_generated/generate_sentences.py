@@ -16,8 +16,8 @@ base_sentence = 'the {0} with the pants that fall {1} often .'
 
 sing_subj_file = 'subjects/singular_subjects.txt'
 plu_subj_file = 'subjects/plural_subjects.txt'
-sing_verb_file = 'verbs/singular_verbs.txt'
-plu_verb_file = 'verbs/plural_verbs.txt'
+sing_verb_file = 'verbs/long_singular_verbs.txt'
+plu_verb_file = 'verbs/long_plural_verbs.txt'
 
 out_file = 'datasets/subj_verb_generated_dataset_3.txt'
 
