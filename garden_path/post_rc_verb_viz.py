@@ -30,7 +30,7 @@ load_files = False
 if not os.path.exists(save_location):
     os.makedirs(save_location)
 
-# np.random.seed(1111)
+np.random.seed(42)
 
 # Load the pretrained model
 with open(model_path, 'rb') as f:
@@ -347,9 +347,6 @@ std_coef = reg_all.coef_[0].std()
 significant_coef_indices = np.where(np.abs(reg_all.coef_[0]) > mean_coef + 3*std_coef)[0]
 
 # print('Significant Units',significant_coef_indices)
-#  [113 145 149 157 169 181 354 383 492 561]
-#  [ 29  43  68 188 275 284 289 407 426 533]
-# [  0  29  43  75 157 247 275 284 407 410 613]
 
 coef_count = {}
 
@@ -388,21 +385,18 @@ true_significance = mean_coef_count + 3*std_coef_count
 
 significant_coef_indices = []
 
-ambiguous_improvement = [-1,-1,-1,-1,-1,-1]
 
 for index,count in coef_count.items():
     if count > true_significance:
         significant_coef_indices.append(index)
 print('True Significant Units',significant_coef_indices)
 
-unambiguous_improvement = [1,1,1,1,1,1]
 
 significant_coef_indices = [410, 499, 613, 29, 157, 608]
 
 modified_ambiguous_hiddens = ambiguous_hiddens.copy()
 for idx in range(len(significant_coef_indices)):
     coef_idx = significant_coef_indices[idx]
-    value = ambiguous_improvement[idx]
     for row in range(modified_ambiguous_hiddens.shape[0]):
         modified_ambiguous_hiddens[row][coef_idx] = 0
 
@@ -438,7 +432,6 @@ print('MOD Who Was Unambiguous Sentence Prediction Accuracy',reg_all.score(modif
 modified_ambiguous_hiddens = ambiguous_hiddens.copy()
 for idx in range(len(significant_coef_indices)):
     coef_idx = significant_coef_indices[idx]
-    value = ambiguous_improvement[idx]
     for row in range(modified_ambiguous_hiddens.shape[0]):
         modified_ambiguous_hiddens[row][coef_idx] = 1
 
@@ -508,13 +501,13 @@ print('MOD Who Was Unambiguous Sentence Prediction Accuracy',reg_all.score(modif
 modified_ambiguous_hiddens = ambiguous_hiddens.copy()
 for idx in range(len(significant_coef_indices)):
     coef_idx = significant_coef_indices[idx]
-    value = ambiguous_improvement[idx]
+    value = -1
     for row in range(modified_ambiguous_hiddens.shape[0]):
         modified_ambiguous_hiddens[row][coef_idx] = value
 modified_unambiguous_hiddens = unambiguous_hiddens.copy()
 for idx in range(len(significant_coef_indices)):
     coef_idx = significant_coef_indices[idx]
-    value = unambiguous_improvement[idx]
+    value = 1
     for row in range(modified_unambiguous_hiddens.shape[0]):
         modified_unambiguous_hiddens[row][coef_idx] = value
 
@@ -538,13 +531,13 @@ print('\n\n TRAINING FROM START \n\n')
 modified_ambiguous_hiddens = ambiguous_hiddens.copy()
 for idx in range(len(significant_coef_indices)):
     coef_idx = significant_coef_indices[idx]
-    value = ambiguous_improvement[idx]
+    value = -1
     for row in range(modified_ambiguous_hiddens.shape[0]):
         modified_ambiguous_hiddens[row][coef_idx] = value
 modified_unambiguous_hiddens = unambiguous_hiddens.copy()
 for idx in range(len(significant_coef_indices)):
     coef_idx = significant_coef_indices[idx]
-    value = unambiguous_improvement[idx]
+    value = 1
     for row in range(modified_unambiguous_hiddens.shape[0]):
         modified_unambiguous_hiddens[row][coef_idx] = value
 
@@ -574,14 +567,7 @@ print('MOD Unambiguous Sentence Prediction Accuracy',reg_all.score(modified_unam
 label = np.zeros(len(whowas_unambiguous_hiddens))
 print('MOD Who Was Unambiguous Sentence Prediction Accuracy',reg_all.score(whowas_unambiguous_hiddens,label))
 
-import pdb; pdb.set_trace()
-
-# [157, 499, 29]
-# [157, 410, 499, 29]
-
-#[157, 608, 613, 499, 29, 410, 426] 1000 experiment
-#[157, 608, 613, 499, 29, 410, 426] 1000 experiment
-# 426? maybe maybe not
+# import pdb; pdb.set_trace()
 
 # from simple observations, it seems that these act as flags in the sense that setting these vaulues to -1 will make the sentence think tht they are ambiguous while setting them to 1 will make them think it is unambiguous
 
@@ -775,11 +761,6 @@ pred_labels = KMeans(n_clusters = 2).fit_predict(significant_hiddens)
 accuracy = sum(pred_labels == all_labels)/len(pred_labels)
 
 print('Significant Hidden Units Clustering 2',accuracy)
-
-pred_labels = KMeans(n_clusters = 2).fit_predict(modified_all_hiddens)
-accuracy = sum(pred_labels == modified_all_labels)/len(pred_labels)
-
-print('Modified All Hidden Units Clustering 2',accuracy)
 
 # import pdb; pdb.set_trace()
 
