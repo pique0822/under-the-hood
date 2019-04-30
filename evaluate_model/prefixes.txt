@@ -1,1 +1,4 @@
-we met at the museum , two days ago . <eos>
+the woman brought the sandwich from the kitchen tripped on the carpet . <eos>
+the woman given the sandwich from the kitchen tripped on the carpet . <eos>
+the woman brought the sandwich from the kitchen . <eos>
+the woman given the sandwich from the kitchen . <eos>
