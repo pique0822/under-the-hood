@@ -21,7 +21,7 @@ model_path = '../models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.
 save_location = 'DCs'
 class_weights = 'balanced'
 
-load_files = True
+load_files = False
 
 if not os.path.exists(save_location):
     os.makedirs(save_location)
