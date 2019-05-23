@@ -452,7 +452,6 @@ significant_coef_indices = np.where(np.abs(best_R2_reg.coef_) > mean_coef + 3*st
 print('True Significant Units',significant_coef_indices)
 for c in significant_coef_indices:
     print(c,reg.coef_[c])
-    predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
 #######
 
 
