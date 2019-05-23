@@ -258,4 +258,257 @@ all_targets = np.concatenate((ambiguous_targets,unambiguous_targets))
 all_targets = np.concatenate((all_targets,unreduced_ambiguous_targets))
 all_targets = np.concatenate((all_targets,unreduced_unambiguous_targets))
 
+# reduced
+coef_count = {}
+cross_validation = 10
 
+
+shuffled_indices = np.arange(len(all_cells))
+np.random.shuffle(shuffled_indices)
+
+print('=== '+str(cross_validation)+' Experiment Significant ===')
+print('Training on '+str(int((cross_validation - 1)/cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
+num_runs = 0
+all_coefs = None
+
+mean_MSE = 0
+mean_R2 = 0
+
+min_MSE = np.infty
+max_MSE = -np.infty
+
+best_mse_reg = None
+
+min_R2 = 1
+max_R2 = -np.infty
+
+best_R2_reg = None
+
+for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
+    print('\nALPHA',alpha_value)
+    for exper_idx in tqdm(list(range(cross_validation)), desc="Experiment"):
+        # import pdb; pdb.set_trace()
+        training_indices = np.concatenate((shuffled_indices[0:int(exper_idx*(1/cross_validation)*len(reduced_cells))],shuffled_indices[int((exper_idx+1)*(1/cross_validation)*len(reduced_cells)):]))
+
+        test_indices = shuffled_indices[int(exper_idx*(1/cross_validation)*len(reduced_cells)):int((exper_idx+1)*(1/cross_validation)*len(reduced_cells))]
+
+        num_runs += 1
+
+        reg = sk.Ridge(alpha=alpha_value).fit(reduced_cells[training_indices],reduced_targets[training_indices])
+
+        if reduced_coefs is None:
+            reduced_coefs = reg.coef_.copy()
+        else:
+            reduced_coefs = np.vstack((reduced_coefs,reg.coef_))
+
+        mean_coef = reg.coef_.mean()
+        std_coef = reg.coef_.std()
+        significant_coef_indices = np.where(np.abs(reg.coef_) > mean_coef + 3*std_coef)[0]
+        for coef_idx in significant_coef_indices:
+            if coef_idx in coef_count:
+                coef_count[coef_idx] += 1
+            else:
+                coef_count[coef_idx] = 1
+
+        predicted_surp = reg.predict(reduced_cells[test_indices])
+
+        # print('EXP '+str(exper_idx)+':: Held Out R^2 Score',skm.r2_score(reduced_targets[test_indices],predicted_surp))
+
+        r2 =skm.r2_score(reduced_targets[test_indices],predicted_surp)
+
+        mean_R2 = (mean_R2*exper_idx + r2)/(exper_idx+1)
+
+        # print('EXP '+str(exper_idx)+':: Held Out MSE Score',skm.mean_squared_error(reduced_targets[test_indices],predicted_surp))
+        mse = skm.mean_squared_error(reduced_targets[test_indices],predicted_surp)
+
+        mean_MSE = (mean_MSE*exper_idx + mse)/(exper_idx + 1)
+
+        if mse > max_MSE:
+            max_MSE = mse
+
+        if mse < min_MSE:
+            min_MSE = mse
+            best_mse_reg = reg
+
+        if r2 > max_R2:
+            max_R2 = r2
+            best_R2_reg = reg
+
+        if r2 < min_R2:
+            min_R2 = r2
+
+    print('MEAN HELD OUT R^2',mean_R2)
+    print('MEAN HELD OUT MSE',mean_MSE)
+
+    print('MAX HELD OUT R^2',max_R2)
+    print('MIN HELD OUT R^2',min_R2)
+
+
+    print('MAX HELD OUT MSE',max_MSE)
+    print('MIN HELD OUT MSE',min_MSE)
+
+    coef_count_values = np.array(list(coef_count.values()))
+    mean_coef_count = coef_count_values.mean()
+    std_coef_count = coef_count_values.std()
+
+    true_significance = mean_coef_count + 3*std_coef_count
+
+    significant_coef_indices = []
+
+    for index,count in coef_count.items():
+        if count > true_significance:
+            significant_coef_indices.append(index)
+
+    # This was added becaues only one coefficient comes up as significant
+    if len(coef_count) == 1:
+        significant_coef_indices = list(coef_count.keys())
+    # print('True Significant Units',significant_coef_indices)
+    # print('Coefficient Signs')
+    # predict_ambiguous_sign = []
+    #
+    # for c in significant_coef_indices:
+    #     print(c,reg.coef_[c])
+    #     predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
+
+    print('\n\nBEST R^2 REG')
+    for c in significant_coef_indices:
+        print(c,reduced_best_R2_reg.coef_[c])
+
+    print('\n\nBEST MSE REG')
+    for c in significant_coef_indices:
+        print(c,reduced_best_mse_reg.coef_[c])
+
+
+
+# all
+
+coef_count = {}
+cross_validation = 10
+
+
+shuffled_indices = np.arange(len(all_cells))
+np.random.shuffle(shuffled_indices)
+
+print('=== '+str(cross_validation)+' Experiment Significant ===')
+print('Training on '+str(int((cross_validation - 1)/cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
+num_runs = 0
+all_coefs = None
+
+mean_MSE = 0
+mean_R2 = 0
+
+min_MSE = np.infty
+max_MSE = -np.infty
+
+best_mse_reg = None
+
+min_R2 = 1
+max_R2 = -np.infty
+
+best_R2_reg = None
+
+for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
+    print('\nALPHA',alpha_value)
+    for exper_idx in tqdm(list(range(cross_validation)), desc="Experiment"):
+        # import pdb; pdb.set_trace()
+        training_indices = np.concatenate((shuffled_indices[0:int(exper_idx*(1/cross_validation)*len(all_cells))],shuffled_indices[int((exper_idx+1)*(1/cross_validation)*len(all_cells)):]))
+
+        test_indices = shuffled_indices[int(exper_idx*(1/cross_validation)*len(all_cells)):int((exper_idx+1)*(1/cross_validation)*len(all_cells))]
+
+        num_runs += 1
+
+        reg = sk.Ridge(alpha=alpha_value).fit(all_cells[training_indices],all_targets[training_indices])
+
+        if all_coefs is None:
+            all_coefs = reg.coef_.copy()
+        else:
+            all_coefs = np.vstack((all_coefs,reg.coef_))
+
+        mean_coef = reg.coef_.mean()
+        std_coef = reg.coef_.std()
+        significant_coef_indices = np.where(np.abs(reg.coef_) > mean_coef + 3*std_coef)[0]
+        for coef_idx in significant_coef_indices:
+            if coef_idx in coef_count:
+                coef_count[coef_idx] += 1
+            else:
+                coef_count[coef_idx] = 1
+
+        predicted_surp = reg.predict(all_cells[test_indices])
+
+        # print('EXP '+str(exper_idx)+':: Held Out R^2 Score',skm.r2_score(all_targets[test_indices],predicted_surp))
+
+        r2 =skm.r2_score(all_targets[test_indices],predicted_surp)
+
+        mean_R2 = (mean_R2*exper_idx + r2)/(exper_idx+1)
+
+        # print('EXP '+str(exper_idx)+':: Held Out MSE Score',skm.mean_squared_error(all_targets[test_indices],predicted_surp))
+        mse = skm.mean_squared_error(all_targets[test_indices],predicted_surp)
+
+        mean_MSE = (mean_MSE*exper_idx + mse)/(exper_idx + 1)
+
+        if mse > max_MSE:
+            max_MSE = mse
+
+        if mse < min_MSE:
+            min_MSE = mse
+            best_mse_reg = reg
+
+        if r2 > max_R2:
+            max_R2 = r2
+            best_R2_reg = reg
+
+        if r2 < min_R2:
+            min_R2 = r2
+
+    print('MEAN HELD OUT R^2',mean_R2)
+    print('MEAN HELD OUT MSE',mean_MSE)
+
+    print('MAX HELD OUT R^2',max_R2)
+    print('MIN HELD OUT R^2',min_R2)
+
+
+    print('MAX HELD OUT MSE',max_MSE)
+    print('MIN HELD OUT MSE',min_MSE)
+
+    coef_count_values = np.array(list(coef_count.values()))
+    mean_coef_count = coef_count_values.mean()
+    std_coef_count = coef_count_values.std()
+
+    true_significance = mean_coef_count + 3*std_coef_count
+
+    significant_coef_indices = []
+
+    for index,count in coef_count.items():
+        if count > true_significance:
+            significant_coef_indices.append(index)
+
+    # This was added becaues only one coefficient comes up as significant
+    if len(coef_count) == 1:
+        significant_coef_indices = list(coef_count.keys())
+    # print('True Significant Units',significant_coef_indices)
+    # print('Coefficient Signs')
+    # predict_ambiguous_sign = []
+    #
+    # for c in significant_coef_indices:
+    #     print(c,reg.coef_[c])
+    #     predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
+
+    print('\n\nBEST R^2 REG')
+    for c in significant_coef_indices:
+        print(c,all_best_R2_reg.coef_[c])
+
+    print('\n\nBEST MSE REG')
+    for c in significant_coef_indices:
+        print(c,all_best_mse_reg.coef_[c])
+
+gen_matrix = [[0,0],[0,0]]
+gen_matrix[0][0] = max(0,reduced_best_R2_reg.score(reduced_cells,reduced_targets))
+gen_matrix[0][1] = max(reduced_best_R2_reg.score(all_cells,all_targets),0)
+
+gen_matrix[0][0] = max(all_best_R2_reg.score(reduced_cells,reduced_targets),0)
+gen_matrix[0][1] = max(all_best_R2_reg.score(all_cells,all_targets),0)
+
+
+plt.imshow(gen_matrix,origin='lower')
+plt.colorbar()
+plt.savefig('training_matrix.png')
