@@ -15,13 +15,16 @@ import numpy as np
 import pandas as pd
 
 import os
+from pathlib import Path
 import utils
 
 import sklearn.metrics as skm
 
 import pickle
+from tqdm import tqdm
 
-model_path = '../models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt'
+ROOT = Path(__file__).absolute().parent.parent
+model_path = '/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt'
 save_location = 'DCs'
 class_weights = 'balanced'
 
@@ -42,7 +45,7 @@ print('=== MODEL INFORMATION ===')
 print(model)
 
 
-data_path = "../data/colorlessgreenRNNs/"
+data_path = ROOT / "data" / "colorlessgreenRNNs"
 
 
 print('\n=== DEFINING CORPUS ===')
@@ -50,9 +53,9 @@ corpus = data.Corpus(data_path)
 ntokens = corpus.dictionary.__len__()
 
 
-df = pd.read_csv('data/verb-ambiguity-with-intervening-phrase.csv')
+df = pd.read_csv(ROOT / "garden_path" / "data" / "verb-ambiguity-with-intervening-phrase.csv")
 
-surp_df = pd.read_csv('../evaluate_model/surprisal_rc.csv')
+surp_df = pd.read_csv(ROOT / "evaluate_model" / "surprisal_rc.csv")
 
 total_surprisal = 0
 previous_prefix = None
@@ -344,7 +347,7 @@ best_R2_reg = None
 
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
-    for exper_idx in range(num_experiments):
+    for exper_idx in tqdm(list(range(num_experiments)), desc="Experiment"):
 
         training_indices = np.random.choice(range(len(all_cells)),int(train_percent*len(all_cells)),replace=False)
 
