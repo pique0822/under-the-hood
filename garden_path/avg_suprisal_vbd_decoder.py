@@ -350,7 +350,7 @@ best_R2_reg = None
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
     for exper_idx in tqdm(list(range(cross_validation)), desc="Experiment"):
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         training_indices = np.concatenate((shuffled_indices[0:int(exper_idx*(1/cross_validation)*len(all_cells))],shuffled_indices[int((exper_idx+1)*(1/cross_validation)*len(all_cells)):]))
 
         test_indices = shuffled_indices[int(exper_idx*(1/cross_validation)*len(all_cells)):int((exper_idx+1)*(1/cross_validation)*len(all_cells))]
