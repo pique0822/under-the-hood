@@ -323,12 +323,13 @@ all_targets = np.concatenate((ambiguous_targets,unambiguous_targets))
 # END OF FILE
 
 coef_count = {}
-train_percent = .7
-num_experiments = 1000
+cross_validation = 15
 
 
-print('=== '+str(num_experiments)+' Experiment Significant ===')
-print('Training on '+str(int(train_percent*len(all_cells))) + ' cell states of '+str(len(all_cells)))
+shuffled_indices = np.random.shuffle(np.arange(len(all_cells)))
+
+print('=== '+str(cross_validation)+' Experiment Significant ===')
+print('Training on '+str(int((cross_validation - 1)/cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
 num_runs = 0
 all_coefs = None
 
@@ -347,11 +348,11 @@ best_R2_reg = None
 
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
-    for exper_idx in tqdm(list(range(num_experiments)), desc="Experiment"):
+    for exper_idx in tqdm(list(range(cross_validation)), desc="Experiment"):
 
-        training_indices = np.random.choice(range(len(all_cells)),int(train_percent*len(all_cells)),replace=False)
+        training_indices = np.concatenate(shuffled_indices[0:exper_idx*cross_validation],shuffled_indices[(exper_idx+1)*cross_validation:])
 
-        test_indices = list(set(range(len(all_cells))).difference(training_indices))
+        test_indices = shuffled_indices[exper_idx*cross_validation:(exper_idx+1)*cross_validation]
 
         num_runs += 1
 
@@ -450,9 +451,9 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 #######
 
 
-pickle.dump(best_R2_reg,open('best_coefs/best_r2_coefs_vbd_FINAL.pkl','wb+'))
-pickle.dump(best_mse_reg,open('best_coefs/best_mse_coefs_vbd_FINAL.pkl','wb+'))
-pickle.dump(significant_coef_indices,open('best_coefs/significant_coefs_vbd_FINAL.pkl','wb+'))
+pickle.dump(best_R2_reg,open('best_coefs/best_r2_coefs_vbd_cross.pkl','wb+'))
+pickle.dump(best_mse_reg,open('best_coefs/best_mse_coefs_vbd_cross.pkl','wb+'))
+pickle.dump(significant_coef_indices,open('best_coefs/significant_coefs_vbd_cross.pkl','wb+'))
 
 print('Ambiguous R^2 Score',best_R2_reg.score(amb_cells, ambiguous_targets))
 print('Unambiguous R^2 Score',best_R2_reg.score(unamb_cells, unambiguous_targets))
