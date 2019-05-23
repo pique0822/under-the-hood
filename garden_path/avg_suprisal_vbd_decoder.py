@@ -326,7 +326,8 @@ coef_count = {}
 cross_validation = 15
 
 
-shuffled_indices = np.arange(len(all_cells)) np.random.shuffle(shuffled_indices)
+shuffled_indices = np.arange(len(all_cells))
+np.random.shuffle(shuffled_indices)
 
 print('=== '+str(cross_validation)+' Experiment Significant ===')
 print('Training on '+str(int((cross_validation - 1)/cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
