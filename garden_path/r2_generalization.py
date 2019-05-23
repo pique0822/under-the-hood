@@ -418,10 +418,6 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 
         reg = sk.Ridge(alpha=alpha_value).fit(all_cells[training_indices],all_targets[training_indices])
 
-        if all_coefs is None:
-            all_coefs = reg.coef_.copy()
-        else:
-            all_coefs = np.vstack((all_coefs,reg.coef_))
 
         mean_coef = reg.coef_.mean()
         std_coef = reg.coef_.std()
