@@ -142,17 +142,17 @@ if not args.surprisalmode:
             outf.write("\n")
 
 if args.surprisalmode:
-    print('SURPRISAL')
+#    print('SURPRISAL')
     sentences = []
     thesentence = []
     eosidx = dictionary.word2idx["<eos>"]
     for w in prefix:
-        print(w)
+#        print(w)
         thesentence.append(w)
         if w == eosidx:
             sentences.append(thesentence)
             thesentence = []
-    print(sentences)
+#    print(sentences)
     ntokens = dictionary.__len__()
     device = torch.device("cuda" if args.cuda else "cpu")
     with open(args.outf, 'w') as outf:
