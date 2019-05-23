@@ -277,12 +277,12 @@ mean_R2 = 0
 min_MSE = np.infty
 max_MSE = -np.infty
 
-best_mse_reg = None
+reduced_best_mse_reg = None
 
 min_R2 = 1
 max_R2 = -np.infty
 
-best_R2_reg = None
+reduced_best_R2_reg = None
 
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
@@ -328,11 +328,11 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 
         if mse < min_MSE:
             min_MSE = mse
-            best_mse_reg = reg
+            reduced_best_mse_reg = reg
 
         if r2 > max_R2:
             max_R2 = r2
-            best_R2_reg = reg
+            reduced_best_R2_reg = reg
 
         if r2 < min_R2:
             min_R2 = r2
@@ -399,12 +399,12 @@ mean_R2 = 0
 min_MSE = np.infty
 max_MSE = -np.infty
 
-best_mse_reg = None
+all_best_mse_reg = None
 
 min_R2 = 1
 max_R2 = -np.infty
 
-best_R2_reg = None
+all_best_R2_reg = None
 
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
@@ -450,11 +450,11 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 
         if mse < min_MSE:
             min_MSE = mse
-            best_mse_reg = reg
+            all_best_mse_reg = reg
 
         if r2 > max_R2:
             max_R2 = r2
-            best_R2_reg = reg
+            all_best_R2_reg = reg
 
         if r2 < min_R2:
             min_R2 = r2
