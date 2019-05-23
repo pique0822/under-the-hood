@@ -263,7 +263,7 @@ coef_count = {}
 cross_validation = 10
 
 
-shuffled_indices = np.arange(len(all_cells))
+shuffled_indices = np.arange(len(reduced_cells))
 np.random.shuffle(shuffled_indices)
 
 print('=== '+str(cross_validation)+' Experiment Significant ===')
@@ -383,7 +383,6 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 # all
 
 coef_count = {}
-cross_validation = 10
 
 
 shuffled_indices = np.arange(len(all_cells))
