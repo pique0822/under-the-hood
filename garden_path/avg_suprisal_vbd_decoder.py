@@ -425,13 +425,13 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     # This was added becaues only one coefficient comes up as significant
     if len(coef_count) == 1:
         significant_coef_indices = list(coef_count.keys())
-    print('True Significant Units',significant_coef_indices)
-    print('Coefficient Signs')
-    predict_ambiguous_sign = []
-
-    for c in significant_coef_indices:
-        print(c,reg.coef_[c])
-        predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
+    # print('True Significant Units',significant_coef_indices)
+    # print('Coefficient Signs')
+    # predict_ambiguous_sign = []
+    #
+    # for c in significant_coef_indices:
+    #     print(c,reg.coef_[c])
+    #     predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
 
     print('\n\nBEST R^2 REG')
     for c in significant_coef_indices:
@@ -446,9 +446,13 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 # std_coefficients = all_coeffs.mean(0)
 
 # REMOVE THIS FOR ORIGINAL
-# mean_coef = best_R2_reg.coef_.mean()
-# std_coef = best_R2_reg.coef_.std()
-# significant_coef_indices = np.where(np.abs(best_R2_reg.coef_) > mean_coef + 3*std_coef)[0]
+mean_coef = best_R2_reg.coef_.mean()
+std_coef = best_R2_reg.coef_.std()
+significant_coef_indices = np.where(np.abs(best_R2_reg.coef_) > mean_coef + 3*std_coef)[0]
+print('True Significant Units',significant_coef_indices)
+for c in significant_coef_indices:
+    print(c,reg.coef_[c])
+    predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
 #######
 
 
