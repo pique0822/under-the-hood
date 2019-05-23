@@ -269,7 +269,7 @@ np.random.shuffle(shuffled_indices)
 print('=== '+str(cross_validation)+' Experiment Significant ===')
 print('Training on '+str(int((cross_validation - 1)/cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
 num_runs = 0
-all_coefs = None
+reduced_coefs = None
 
 mean_MSE = 0
 mean_R2 = 0
@@ -418,6 +418,10 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 
         reg = sk.Ridge(alpha=alpha_value).fit(all_cells[training_indices],all_targets[training_indices])
 
+        if all_coefs is None:
+            all_coefs = reg.coef_.copy()
+        else:
+            all_coefs = np.vstack((all_coefs,reg.coef_))
 
         mean_coef = reg.coef_.mean()
         std_coef = reg.coef_.std()
