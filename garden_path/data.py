@@ -1,6 +1,7 @@
 import os
 import torch
 
+import codecs
 from collections import Counter
 
 
@@ -36,7 +37,7 @@ class Corpus(object):
         print(path)
         assert os.path.exists(path)
         # Add words to the dictionary
-        with open(path, 'r') as f:
+        with codecs.open(path, 'r', encoding='utf-8') as f:
             tokens = 0
             for line in f:
                 words = line.split() + ['<eos>']
@@ -45,7 +46,7 @@ class Corpus(object):
                     self.dictionary.add_word(word)
 
         # Tokenize file content
-        with open(path, 'r') as f:
+        with codecs.open(path, 'r', encoding='utf-8') as f:
             ids = torch.LongTensor(tokens)
             token = 0
             for line in f:
@@ -57,13 +58,13 @@ class Corpus(object):
         return ids
 
     def safe_tokenize(self, path):
-        with open(path, 'r') as f:
+        with codecs.open(path, 'r', encoding='utf-8') as f:
             tokens = 0
             for line in f:
                 words = line.split() + ['<eos>']
                 tokens += len(words)
         # Tokenize file content
-        with open(path, 'r') as f:
+        with codecs.open(path, 'r', encoding='utf-8') as f:
             ids = torch.LongTensor(tokens)
             token = 0
             for line in f:
@@ -80,7 +81,7 @@ class Corpus(object):
 
     def safe_tokenize_lines(self, path):
         all_lines = []
-        with open(path, 'r') as f:
+        with codecs.open(path, 'r', encoding='utf-8') as f:
             for line in f:
                 words = line.split() + ['<eos>']
                 tokens = len(words)
