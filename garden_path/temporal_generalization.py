@@ -211,14 +211,14 @@ if not load_files:
                 output, hidden = model(input,hidden)
 
             # get the last cell state in the whole temporal region
-            if column in whowas_temporal_cell_states:
+            if column in whowas_amb_temporal_cell_states:
                 whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
             else:
                 whowas_amb_temporal_cell_states[column] = []
                 whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        ambiguous_surprisal = prefix_to_avg[ambiguous_full]
-        ambiguous_targets.append(ambiguous_surprisal)
+        unreduced_ambiguous_targets = prefix_to_avg[ambiguous_full]
+        unreduced_ambiguous_targets.append(ambiguous_surprisal)
 
 
         # Unreduced Unambiguous
@@ -243,8 +243,8 @@ if not load_files:
                 whowas_unamb_temporal_cell_states[column] = []
                 whowas_unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        whowas_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full
-        whowas_unambiguous_targets.append(whowas_unambiguous_surprisal)
+        unreduced_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
+        unreduced_unambiguous_targets.append(unreduced_unambiguous_surprisal)
 
 # generating matrix
 
@@ -278,13 +278,6 @@ plt.ylabel('Testing On')
 plt.title('Clipped R^2 Scores')
 
 plt.savefig('ambiguous_generalization_matrix.png')
-
-
-
-singularity shell -B /om2/ -B /om/group/cpl -B /net/storage001.ib.cluster/om2/user/drmiguel/representational_analysis/under-the-hood /om2/user/jgauthie/singularity_images/deepo-cpu.simg
-
-
-
 
 
 
