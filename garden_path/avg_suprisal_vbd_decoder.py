@@ -33,11 +33,9 @@ parser.add_argument('--seed', type=int, default=1111,
 parser.add_argument('--training_cells', type=str, default='reduced',
                     help='select the cells that will be used to train the model {reduced | all}')
 parser.add_argument('--cross_validation',type=int,default=10,help='Amount of cross validation folds')
-parser.add_argument('--file_identifier', type=str, default='FINAL',
+parser.add_argument('--file_identifier', type=str, default='TEST',
                     help='unique identifier for the files generated in this method [DO NOT USE SPACES]')
 args = parser.parse_args()
-
-import pdb; pdb.set_trace()
 
 ROOT = Path(__file__).absolute().parent.parent
 
@@ -279,7 +277,7 @@ coef_count = {}
 shuffled_indices = np.arange(len(all_cells))
 np.random.shuffle(shuffled_indices)
 
-print('=== '+str(cross_validation)+' Experiment Significant ===')
+print('=== '+str(args.cross_validation)+' Experiment Significant ===')
 print('Training on '+str(int((args.cross_validation - 1)/args.cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
 
 num_runs = 0
