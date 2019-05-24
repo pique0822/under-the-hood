@@ -300,9 +300,9 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
     for exper_idx in tqdm(list(range(args.cross_validation)), desc="Experiment"):
         # import pdb; pdb.set_trace()
-        training_indices = np.concatenate((shuffled_indices[0:int((exper_idx/args.cross_validation)*len(all_cells))],shuffled_indices[int((exper_idx+1/args.cross_validation)*len(all_cells)):]))
+        training_indices = np.concatenate((shuffled_indices[0:int((exper_idx/args.cross_validation)*len(all_cells))],shuffled_indices[int(((exper_idx+1)/args.cross_validation)*len(all_cells)):]))
 
-        test_indices = shuffled_indices[int(exper_idx/args.cross_validation)*len(all_cells)):int((exper_idx+1)/args.cross_validation)*len(all_cells))]
+        test_indices = shuffled_indices[int((exper_idx/args.cross_validation)*len(all_cells)):int(((exper_idx+1)/args.cross_validation)*len(all_cells))]
 
         num_runs += 1
 
