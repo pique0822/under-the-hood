@@ -26,8 +26,6 @@ from tqdm import tqdm
 import argparse
 
 parser = argparse.ArgumentParser(description='Average Surprisal Decoder')
-parser.add_argument('--save_folder', type=str,
-            help='save folder location', default='best_coefs')
 parser.add_argument('--model_path', type=str,
             help='model location', default='/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt')
 parser.add_argument('--seed', type=int, default=1111,
@@ -44,8 +42,8 @@ args = parser.parse_args()
 
 load_files = False
 
-if not os.path.exists(args.save_folder):
-    os.makedirs(args.save_folder)
+if not os.path.exists('best_coefs'):
+    os.makedirs('best_coefs')
 
 np.random.seed(args.seed)
 
