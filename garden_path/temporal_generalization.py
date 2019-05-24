@@ -23,6 +23,8 @@ import sklearn.metrics as skm
 import pickle
 from tqdm import tqdm
 
+import seaborn as sns
+
 ROOT = Path(__file__).absolute().parent.parent
 model_path = '/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt'
 save_location = 'DCs'
