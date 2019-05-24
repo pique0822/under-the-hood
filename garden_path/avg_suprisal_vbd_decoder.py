@@ -81,14 +81,14 @@ for i in range(len(surp_df)):
     prefix = ' '.join(split_sentence[:len(split_sentence)-2])
 
     if previous_prefix != prefix:
-    if previous_prefix is not None:
-        prefix_to_avg[previous_prefix] = total_surprisal/count
+        if previous_prefix is not None:
+            prefix_to_avg[previous_prefix] = total_surprisal/count
 
-    total_surprisal = surprisal
-    count = 1
+        total_surprisal = surprisal
+        count = 1
     else:
-    total_surprisal += surprisal
-    count += 1
+        total_surprisal += surprisal
+        count += 1
 
     previous_prefix = prefix
 
