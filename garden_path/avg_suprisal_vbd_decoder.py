@@ -128,30 +128,30 @@ for df_idx in tqdm(list(range(len(df)))):
 
     main_verb = row['Disambiguator'].strip().lstrip()
     if main_verb in corpus.dictionary.word2idx:
-    main_verb_idx = corpus.dictionary.word2idx[main_verb]
+        main_verb_idx = corpus.dictionary.word2idx[main_verb]
     else:
-    main_verb_idx = corpus.dictionary.word2idx["<unk>"]
+        main_verb_idx = corpus.dictionary.word2idx["<unk>"]
 
     full_stop_idx = corpus.dictionary.word2idx['.']
 
     ambiguous_prefix = ""
     for column in ambiguous_cols_prefix:
-    ambiguous_prefix += ' '+row[column]
-    ambiguous_prefix = ambiguous_prefix.lstrip().strip()
-    whowas_ambiguous_prefix = ""
+        ambiguous_prefix += ' '+row[column]
+        ambiguous_prefix = ambiguous_prefix.lstrip().strip()
+        whowas_ambiguous_prefix = ""
     for column in whowas_ambiguous_cols_prefix:
-    whowas_ambiguous_prefix += ' '+row[column]
-    whowas_ambiguous_prefix = whowas_ambiguous_prefix.lstrip().strip()
+        whowas_ambiguous_prefix += ' '+row[column]
+        whowas_ambiguous_prefix = whowas_ambiguous_prefix.lstrip().strip()
 
     unambiguous_prefix = ""
     for column in unambiguous_cols_prefix:
-    unambiguous_prefix += ' '+row[column]
-    unambiguous_prefix = unambiguous_prefix.lstrip().strip()
+        unambiguous_prefix += ' '+row[column]
+        unambiguous_prefix = unambiguous_prefix.lstrip().strip()
 
     whowas_unambiguous_prefix = ""
     for column in whowas_unambiguous_cols_prefix:
-    whowas_unambiguous_prefix += ' '+row[column]
-    whowas_unambiguous_prefix = whowas_unambiguous_prefix.lstrip().strip()
+        whowas_unambiguous_prefix += ' '+row[column]
+        whowas_unambiguous_prefix = whowas_unambiguous_prefix.lstrip().strip()
 
 
 
