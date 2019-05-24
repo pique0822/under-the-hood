@@ -257,12 +257,16 @@ generalization_matrix = np.zeros((len(ambiguous_cols_full),len(ambiguous_cols_fu
 training_percent = 0.8
 for col,training_column in enumerate(ambiguous_cols_full):
 
-    training_cells = amb_temporal_cell_states[training_column]
+    training_cells =amb_temporal_cell_states[training_column]
+
+    training_cells = np.array(training_cells).reshape(len(training_cells),-1)
 
     reg = sk.Ridge(alpha=10).fit(training_cells,ambiguous_targets)
 
     for row,test_column in enumerate(ambiguous_cols_full):
         test_cells = amb_temporal_cell_states[test_column]
+
+        test_cells = np.array(test_cells).reshape(len(test_cells),-1)
 
         r2 =skm.r2_score(test_cells,ambiguous_targets)
 
