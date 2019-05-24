@@ -7,7 +7,7 @@
 #python3 evaluate_target_word_test.py --data ../data/colorlessgreenRNNs --checkpoint ../models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt --prefixfile prefixes.txt --surprisalmode True --outf surgical_hidden.txt --modify_hidden True
 
 #python3 evaluate_target_word_test.py --data ../data/colorlessgreenRNNs --checkpoint ../models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt --prefixfile prefixes.txt --surprisalmode True --outf surgical_maximal_weight.txt --modify_cell True
-
+from pathlib import Path
 import argparse
 
 import torch
@@ -51,9 +51,11 @@ parser.add_argument('--surgical_difference', type=float, default=1.0,
 
 args = parser.parse_args()
 
-significant_coef_indices = pickle.load(open('../garden_path/best_coefs/significant_coefs_vbd_FINAL.pkl','rb+'))
+ROOT = Path(__file__).absolute().parent.parent
 
-best_r2_reg = np.load(open('../garden_path/best_coefs/best_r2_coefs_vbd_FINAL.pkl','rb+'))
+significant_coef_indices = pickle.load(open(ROOT / 'garden_path'/'best_coefs'/'significant_coefs_vbd_FINAL.pkl','rb+'))
+
+best_r2_reg = np.load(open(ROOT/'garden_path'/'best_coefs'/'best_r2_coefs_vbd_FINAL.pkl','rb+'))
 
 
 
@@ -142,17 +144,17 @@ if not args.surprisalmode:
             outf.write("\n")
 
 if args.surprisalmode:
-    print('SURPRISAL')
+#    print('SURPRISAL')
     sentences = []
     thesentence = []
     eosidx = dictionary.word2idx["<eos>"]
     for w in prefix:
-        print(w)
+#        print(w)
         thesentence.append(w)
         if w == eosidx:
             sentences.append(thesentence)
             thesentence = []
-    print(sentences)
+#    print(sentences)
     ntokens = dictionary.__len__()
     device = torch.device("cuda" if args.cuda else "cpu")
     with open(args.outf, 'w') as outf:

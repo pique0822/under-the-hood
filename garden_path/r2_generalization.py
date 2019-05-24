@@ -23,6 +23,8 @@ import sklearn.metrics as skm
 import pickle
 from tqdm import tqdm
 
+import seaborn as sns
+
 ROOT = Path(__file__).absolute().parent.parent
 model_path = '/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt'
 save_location = 'DCs'
@@ -111,7 +113,7 @@ def surprisal_score(verb_surp,period_surp):
 
 if not load_files:
     print('=== TESTING MODEL ===')
-    for df_idx in tqdm(list(range(len(df)))):
+    for df_idx in range(len(df)):
         print('')
         row = df.iloc[df_idx]
 
@@ -240,90 +242,149 @@ if not load_files:
             whowas_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
             unreduced_unambiguous_targets.append(whowas_unambiguous_surprisal)
 
-        # print(ambiguous_full)
-        # break
-if not load_files:
-    unamb_cells = np.array(unamb_cells).reshape(len(unamb_cells),-1)
-    amb_cells = np.array(amb_cells).reshape(len(amb_cells),-1)
-    unreamb_cells = np.array(unreamb_cells).reshape(len(unreamb_cells),-1)
-    unreunamb_cells = np.array(unreunamb_cells).reshape(len(unreunamb_cells),-1)
+        print(ambiguous_full)
 
-print('\n=== PLOTTING VIZ ===')
-if not load_files:
-    np.save('data/saved_arrays/unamb_cell_states.npy', unamb_cells)
-    np.save('data/saved_arrays/unamb_surp_diff.npy', unambiguous_targets)
+unamb_cells = np.array(unamb_cells).reshape(len(unamb_cells),-1)
+amb_cells = np.array(amb_cells).reshape(len(amb_cells),-1)
+unreamb_cells = np.array(unreamb_cells).reshape(len(unreamb_cells),-1)
+unreunamb_cells = np.array(unreunamb_cells).reshape(len(unreunamb_cells),-1)
 
-    np.save('data/saved_arrays/amb_cell_states.npy', amb_cells)
-    np.save('data/saved_arrays/amb_surp_diff.npy', ambiguous_targets)
-
-
-    np.save('data/saved_arrays/unreamb_cell_states.npy', unreamb_cells)
-    np.save('data/saved_arrays/unreamb_surp_diff.npy', unreduced_ambiguous_targets)
-else:
-    unamb_cells = np.load('data/saved_arrays/unamb_cell_states.npy')
-    unambiguous_targets = np.load('data/saved_arrays/unamb_surp_diff.npy')
-
-    amb_cells = np.load('data/saved_arrays/amb_cell_states.npy')
-    ambiguous_targets = np.load('data/saved_arrays/amb_surp_diff.npy')
-
-    unreamb_cells = np.load('data/saved_arrays/unreamb_cell_states.npy')
-    unreduced_ambiguous_targets = np.load('data/saved_arrays/unreamb_surp_diff.npy')
-
+reduced_cells = np.concatenate((amb_cells,unamb_cells))
+reduced_targets = np.concatenate((ambiguous_targets,unambiguous_targets))
 
 all_cells = np.concatenate((amb_cells,unamb_cells))
-#
-# # uncomment for all sentences in training
-# all_cells = np.concatenate((all_cells,unreamb_cells))
-# all_cells = np.concatenate((all_cells,unreunamb_cells))
-
-# all cells
-# all_cells = np.concatenate((unreamb_cells,unreunamb_cells))
+all_cells = np.concatenate((all_cells,unreamb_cells))
+all_cells = np.concatenate((all_cells,unreunamb_cells))
 
 all_targets = np.concatenate((ambiguous_targets,unambiguous_targets))
-#
-# # uncomment for all sentences in training
-# all_targets = np.concatenate((all_targets,unreduced_ambiguous_targets))
-# all_targets = np.concatenate((all_targets,unreduced_unambiguous_targets))
+all_targets = np.concatenate((all_targets,unreduced_ambiguous_targets))
+all_targets = np.concatenate((all_targets,unreduced_unambiguous_targets))
 
-# just unreduced
-# all_targets = np.concatenate((unreduced_ambiguous_targets,unreduced_unambiguous_targets))
+# reduced
+coef_count = {}
+cross_validation = 10
 
-""" Jsut reduced
-39 -0.38784295
-189 0.33676547
-281 -0.47673437 *
-474 0.32674462 *
-648 -0.34725198
-"""
-""" all
-474 0.28397393 *
-396 -0.2829467 &
-499 -0.23890975
-27 0.29303062
-281 -0.33377486 *
-"""
-""" unreduced
-396 -0.3606371 &
-533 0.16612066
-51 0.18047051
-115 -0.23789778
-93 -0.18395881
-"""
-""" 2std
-16 0.37091076
-326 0.12533382
-396 -0.39716858 &
-404 0.24766985
-533 0.47737217
-51 0.3803634
-115 -0.3785558
-93 -0.5350999
-91 -0.2485853
-"""
-# END OF FILE
+
+shuffled_indices = np.arange(len(reduced_cells))
+np.random.shuffle(shuffled_indices)
+
+print('=== '+str(cross_validation)+' Experiment Significant ===')
+print('Training on '+str(int((cross_validation - 1)/cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
+num_runs = 0
+reduced_coefs = None
+
+mean_MSE = 0
+mean_R2 = 0
+
+min_MSE = np.infty
+max_MSE = -np.infty
+
+reduced_best_mse_reg = None
+
+min_R2 = 1
+max_R2 = -np.infty
+
+reduced_best_R2_reg = None
+
+for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
+    print('\nALPHA',alpha_value)
+    for exper_idx in tqdm(list(range(cross_validation)), desc="Experiment"):
+        # import pdb; pdb.set_trace()
+        training_indices = np.concatenate((shuffled_indices[0:int(exper_idx*(1/cross_validation)*len(reduced_cells))],shuffled_indices[int((exper_idx+1)*(1/cross_validation)*len(reduced_cells)):]))
+
+        test_indices = shuffled_indices[int(exper_idx*(1/cross_validation)*len(reduced_cells)):int((exper_idx+1)*(1/cross_validation)*len(reduced_cells))]
+
+        num_runs += 1
+
+        reg = sk.Ridge(alpha=alpha_value).fit(reduced_cells[training_indices],reduced_targets[training_indices])
+
+        if reduced_coefs is None:
+            reduced_coefs = reg.coef_.copy()
+        else:
+            reduced_coefs = np.vstack((reduced_coefs,reg.coef_))
+
+        mean_coef = reg.coef_.mean()
+        std_coef = reg.coef_.std()
+        significant_coef_indices = np.where(np.abs(reg.coef_) > mean_coef + 3*std_coef)[0]
+        for coef_idx in significant_coef_indices:
+            if coef_idx in coef_count:
+                coef_count[coef_idx] += 1
+            else:
+                coef_count[coef_idx] = 1
+
+        predicted_surp = reg.predict(reduced_cells[test_indices])
+
+        # print('EXP '+str(exper_idx)+':: Held Out R^2 Score',skm.r2_score(reduced_targets[test_indices],predicted_surp))
+
+        r2 =skm.r2_score(reduced_targets[test_indices],predicted_surp)
+
+        mean_R2 = (mean_R2*exper_idx + r2)/(exper_idx+1)
+
+        # print('EXP '+str(exper_idx)+':: Held Out MSE Score',skm.mean_squared_error(reduced_targets[test_indices],predicted_surp))
+        mse = skm.mean_squared_error(reduced_targets[test_indices],predicted_surp)
+
+        mean_MSE = (mean_MSE*exper_idx + mse)/(exper_idx + 1)
+
+        if mse > max_MSE:
+            max_MSE = mse
+
+        if mse < min_MSE:
+            min_MSE = mse
+            reduced_best_mse_reg = reg
+
+        if r2 > max_R2:
+            max_R2 = r2
+            reduced_best_R2_reg = reg
+
+        if r2 < min_R2:
+            min_R2 = r2
+
+    print('MEAN HELD OUT R^2',mean_R2)
+    print('MEAN HELD OUT MSE',mean_MSE)
+
+    print('MAX HELD OUT R^2',max_R2)
+    print('MIN HELD OUT R^2',min_R2)
+
+
+    print('MAX HELD OUT MSE',max_MSE)
+    print('MIN HELD OUT MSE',min_MSE)
+
+    coef_count_values = np.array(list(coef_count.values()))
+    mean_coef_count = coef_count_values.mean()
+    std_coef_count = coef_count_values.std()
+
+    true_significance = mean_coef_count + 3*std_coef_count
+
+    significant_coef_indices = []
+
+    for index,count in coef_count.items():
+        if count > true_significance:
+            significant_coef_indices.append(index)
+
+    # This was added becaues only one coefficient comes up as significant
+    if len(coef_count) == 1:
+        significant_coef_indices = list(coef_count.keys())
+    # print('True Significant Units',significant_coef_indices)
+    # print('Coefficient Signs')
+    # predict_ambiguous_sign = []
+    #
+    # for c in significant_coef_indices:
+    #     print(c,reg.coef_[c])
+    #     predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
+
+    print('\n\nBEST R^2 REG')
+    for c in significant_coef_indices:
+        print(c,reduced_best_R2_reg.coef_[c])
+
+    print('\n\nBEST MSE REG')
+    for c in significant_coef_indices:
+        print(c,reduced_best_mse_reg.coef_[c])
+
+
+
+# all
 
 coef_count = {}
-cross_validation = 15
 
 
 shuffled_indices = np.arange(len(all_cells))
@@ -340,12 +401,12 @@ mean_R2 = 0
 min_MSE = np.infty
 max_MSE = -np.infty
 
-best_mse_reg = None
+all_best_mse_reg = None
 
 min_R2 = 1
 max_R2 = -np.infty
 
-best_R2_reg = None
+all_best_R2_reg = None
 
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
@@ -391,11 +452,11 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 
         if mse < min_MSE:
             min_MSE = mse
-            best_mse_reg = reg
+            all_best_mse_reg = reg
 
         if r2 > max_R2:
             max_R2 = r2
-            best_R2_reg = reg
+            all_best_R2_reg = reg
 
         if r2 < min_R2:
             min_R2 = r2
@@ -435,31 +496,30 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 
     print('\n\nBEST R^2 REG')
     for c in significant_coef_indices:
-        print(c,best_R2_reg.coef_[c])
+        print(c,all_best_R2_reg.coef_[c])
 
     print('\n\nBEST MSE REG')
     for c in significant_coef_indices:
-        print(c,best_mse_reg.coef_[c])
+        print(c,all_best_mse_reg.coef_[c])
 
-# import pdb; pdb.set_trace()
-# mean_coefficients = all_coefs.mean(0)
-# std_coefficients = all_coeffs.mean(0)
+gen_matrix = [[0,0],[0,0]]
+gen_matrix[0][0] = max(0,reduced_best_R2_reg.score(reduced_cells,reduced_targets))
+gen_matrix[0][1] = max(reduced_best_R2_reg.score(all_cells,all_targets),0)
 
-# REMOVE THIS FOR ORIGINAL
-mean_coef = best_R2_reg.coef_.mean()
-std_coef = best_R2_reg.coef_.std()
-significant_coef_indices = np.where(np.abs(best_R2_reg.coef_) > mean_coef + 3*std_coef)[0]
-print('True Significant Units',significant_coef_indices)
-for c in significant_coef_indices:
-    print(c,reg.coef_[c])
-#######
+gen_matrix[1][0] = max(all_best_R2_reg.score(reduced_cells,reduced_targets),0)
+gen_matrix[1][1] = max(all_best_R2_reg.score(all_cells,all_targets),0)
 
 
-pickle.dump(best_R2_reg,open('best_coefs/best_r2_coefs_vbd_cross.pkl','wb+'))
-pickle.dump(best_mse_reg,open('best_coefs/best_mse_coefs_vbd_cross.pkl','wb+'))
-pickle.dump(significant_coef_indices,open('best_coefs/significant_coefs_vbd_cross.pkl','wb+'))
+ax = sns.heatmap(gen_matrix,vmin=0,vmax=1,annot=True, fmt="f")
 
-print('Ambiguous R^2 Score',best_R2_reg.score(amb_cells, ambiguous_targets))
-print('Unambiguous R^2 Score',best_R2_reg.score(unamb_cells, unambiguous_targets))
-print('Unreduced Ambiguous R^2 Score',best_R2_reg.score(unreamb_cells, unreduced_ambiguous_targets))
-print('Unreduced Unambiguous R^2 Score',best_R2_reg.score(unreunamb_cells, unreduced_unambiguous_targets))
+ax.invert_yaxis()
+
+plt.xticks([0.5,1.5],['Reduced','All'])
+plt.xlabel('Training On')
+
+plt.yticks([0.5,1.5],['Reduced','All'])
+plt.ylabel('Testing On')
+
+plt.title('Best Held Out R^2 Scores')
+
+plt.savefig('training_matrix.png')
