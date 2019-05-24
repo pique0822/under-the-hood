@@ -146,111 +146,109 @@ if not load_files:
 
 
         # Ambiguous
-
-        hidden = model.init_hidden(1)
-
-        for column in ambiguous_cols_full:
-            partial_input = row[column]
-            partial_input = partial_input.lstrip().strip()
-
-            tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
-
-            for token in tokenized_inp:
-                input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-                input.fill_(token.item())
-                output, hidden = model(input,hidden)
-
-            # get the last cell state in the whole temporal region
-            if column in amb_temporal_cell_states:
-                amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-            else:
-                amb_temporal_cell_states[column] = []
-                amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-
         if ambiguous_full in prefix_to_avg:
-            ambiguous_surprisal = prefix_to_avg[ambiguous_full]
-            ambiguous_targets.append(ambiguous_surprisal)
+            hidden = model.init_hidden(1)
+
+            for column in ambiguous_cols_full:
+                partial_input = row[column]
+                partial_input = partial_input.lstrip().strip()
+
+                tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
+
+                for token in tokenized_inp:
+                    input = torch.randint(ntokens, (1, 1), dtype=torch.long)
+                    input.fill_(token.item())
+                    output, hidden = model(input,hidden)
+
+                # get the last cell state in the whole temporal region
+                if column in amb_temporal_cell_states:
+                    amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+                else:
+                    amb_temporal_cell_states[column] = []
+                    amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+
+                ambiguous_surprisal = prefix_to_avg[ambiguous_full]
+                ambiguous_targets.append(ambiguous_surprisal)
 
 
         # Unambiguous
-
-        hidden = model.init_hidden(1)
-
-        for column in unambiguous_cols_full:
-            partial_input = row[column]
-            partial_input = partial_input.lstrip().strip()
-
-            tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
-
-            for token in tokenized_inp:
-                input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-                input.fill_(token.item())
-                output, hidden = model(input,hidden)
-
-            # get the last cell state in the whole temporal region
-            if column in unamb_temporal_cell_states:
-                unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-            else:
-                unamb_temporal_cell_states[column] = []
-                unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-
         if unambiguous_full in prefix_to_avg:
-            unambiguous_surprisal = prefix_to_avg[unambiguous_full]
-            unambiguous_targets.append(unambiguous_surprisal)
+            hidden = model.init_hidden(1)
+
+            for column in unambiguous_cols_full:
+                partial_input = row[column]
+                partial_input = partial_input.lstrip().strip()
+
+                tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
+
+                for token in tokenized_inp:
+                    input = torch.randint(ntokens, (1, 1), dtype=torch.long)
+                    input.fill_(token.item())
+                    output, hidden = model(input,hidden)
+
+                # get the last cell state in the whole temporal region
+                if column in unamb_temporal_cell_states:
+                    unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+                else:
+                    unamb_temporal_cell_states[column] = []
+                    unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+
+
+                unambiguous_surprisal = prefix_to_avg[unambiguous_full]
+                unambiguous_targets.append(unambiguous_surprisal)
 
 
         # Unreduced Ambiguous
-
-        hidden = model.init_hidden(1)
-
-        for column in whowas_ambiguous_cols_full:
-            partial_input = row[column]
-            partial_input = partial_input.lstrip().strip()
-
-            tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
-
-            for token in tokenized_inp:
-                input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-                input.fill_(token.item())
-                output, hidden = model(input,hidden)
-
-            # get the last cell state in the whole temporal region
-            if column in whowas_amb_temporal_cell_states:
-                whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-            else:
-                whowas_amb_temporal_cell_states[column] = []
-                whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-
         if whowas_unambiguous_full in prefix_to_avg:
-            unreduced_ambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
-            unreduced_ambiguous_targets.append(unreduced_ambiguous_surprisal)
+            hidden = model.init_hidden(1)
+
+            for column in whowas_ambiguous_cols_full:
+                partial_input = row[column]
+                partial_input = partial_input.lstrip().strip()
+
+                tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
+
+                for token in tokenized_inp:
+                    input = torch.randint(ntokens, (1, 1), dtype=torch.long)
+                    input.fill_(token.item())
+                    output, hidden = model(input,hidden)
+
+                # get the last cell state in the whole temporal region
+                if column in whowas_amb_temporal_cell_states:
+                    whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+                else:
+                    whowas_amb_temporal_cell_states[column] = []
+                    whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+
+
+                unreduced_ambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
+                unreduced_ambiguous_targets.append(unreduced_ambiguous_surprisal)
 
 
         # Unreduced Unambiguous
-
-        hidden = model.init_hidden(1)
-
-        for column in whowas_unambiguous_cols_full:
-            partial_input = row[column]
-            partial_input = partial_input.lstrip().strip()
-
-            tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
-
-            for token in tokenized_inp:
-                input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-                input.fill_(token.item())
-                output, hidden = model(input,hidden)
-
-            # get the last cell state in the whole temporal region
-            if column in whowas_unamb_temporal_cell_states:
-                whowas_unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-            else:
-                whowas_unamb_temporal_cell_states[column] = []
-                whowas_unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
-
         if whowas_unambiguous_full in prefix_to_avg:
-            unreduced_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
-            unreduced_unambiguous_targets.append(unreduced_unambiguous_surprisal)
+            hidden = model.init_hidden(1)
+
+            for column in whowas_unambiguous_cols_full:
+                partial_input = row[column]
+                partial_input = partial_input.lstrip().strip()
+
+                tokenized_inp = corpus.safe_tokenize_sentence(partial_input)
+
+                for token in tokenized_inp:
+                    input = torch.randint(ntokens, (1, 1), dtype=torch.long)
+                    input.fill_(token.item())
+                    output, hidden = model(input,hidden)
+
+                # get the last cell state in the whole temporal region
+                if column in whowas_unamb_temporal_cell_states:
+                    whowas_unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+                else:
+                    whowas_unamb_temporal_cell_states[column] = []
+                    whowas_unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
+
+                unreduced_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
+                unreduced_unambiguous_targets.append(unreduced_unambiguous_surprisal)
 # generating matrix
 
 
