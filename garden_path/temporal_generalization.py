@@ -275,7 +275,7 @@ for col,training_column in enumerate(ambiguous_cols_full):
 
         generalization_matrix[row][col] = max(0,r2)
 
-ax = sns.heatmap(gen_matrix,vmin=0,vmax=1,annot=True, fmt="f")
+ax = sns.heatmap(generalization_matrix,vmin=0,vmax=1,annot=True, fmt="f")
 
 ax.invert_yaxis()
 
