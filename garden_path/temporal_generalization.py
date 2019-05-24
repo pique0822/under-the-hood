@@ -278,11 +278,11 @@ for col,training_column in enumerate(ambiguous_cols_full):
 ax = sns.heatmap(generalization_matrix,vmin=0,vmax=1,annot=True, fmt="f")
 
 ax.invert_yaxis()
-
-plt.xticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full, labelsize='small')
+ax.tick_params( labelsize='small')
+plt.xticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full)
 plt.xlabel('Training On')
 
-plt.yticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full, labelsize='small')
+plt.yticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full)
 plt.ylabel('Testing On')
 
 plt.title('Clipped R^2 Scores')
