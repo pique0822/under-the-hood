@@ -56,9 +56,9 @@ args = parser.parse_args()
 
 ROOT = Path(__file__).absolute().parent.parent
 
-significant_coef_indices = pickle.load(open(ROOT / 'garden_path'/'best_coefs'/'significant_coefs_'+args.file_identifier+'.pkl','rb+'))
+significant_coef_indices = pickle.load(open(ROOT / 'garden_path'/'best_coefs'/str('significant_coefs_'+str(args.file_identifier)+'.pkl'),'rb+'))
 
-best_r2_reg = np.load(open(ROOT/'garden_path'/'best_coefs'/'best_r2_coefs_'+args.file_identifier+'.pkl','rb+'))
+best_r2_reg = np.load(open(ROOT/'garden_path'/'best_coefs'/str('best_r2_coefs_'+str(args.file_identifier)+'.pkl'),'rb+'))
 
 
 
