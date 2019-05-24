@@ -246,7 +246,7 @@ if not load_files:
                 whowas_unamb_temporal_cell_states[column] = []
                 whowas_unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        if whowas_ambiguous_full in prefix_to_avg:
+        if whowas_unambiguous_full in prefix_to_avg:
             unreduced_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
             unreduced_unambiguous_targets.append(unreduced_unambiguous_surprisal)
 # generating matrix
