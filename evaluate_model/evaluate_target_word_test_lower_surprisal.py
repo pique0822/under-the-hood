@@ -50,7 +50,7 @@ parser.add_argument('--surgical_difference', type=float, default=1.0,
                     help='constant to be used to set the cells at the RC Verb')
 parser.add_argument('--file_identifier', type=str, default='',
                     help='Identifier for the .pkl files with the relevant significant units')
-parser.add_argument('--gradient_type', type=bool, default='weight',
+parser.add_argument('--gradient_type', type=str, default='weight',
                     help='Type of gradient step to modify the x values {loss | weight}')
 args = parser.parse_args()
 
