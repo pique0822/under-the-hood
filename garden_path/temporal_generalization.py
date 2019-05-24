@@ -253,44 +253,51 @@ if not load_files:
             unreduced_unambiguous_targets.append(unreduced_unambiguous_surprisal)
 # generating matrix
 
-generalization_matrix = np.zeros((len(ambiguous_cols_full),len(ambiguous_cols_full)))
 
+def generalization_matrix(relevant_cols,temporal_cell_states,targets,save_name,training_percent = 0.8):
 
-training_percent = 0.8
-for col,training_column in enumerate(ambiguous_cols_full):
-
-    training_cells =amb_temporal_cell_states[training_column]
-
-    training_cells = np.array(training_cells).reshape(len(training_cells),-1)
-
-    reg = sk.Ridge(alpha=10).fit(training_cells,ambiguous_targets)
-
-    for row,test_column in enumerate(ambiguous_cols_full):
-        test_cells = amb_temporal_cell_states[test_column]
-
-        test_cells = np.array(test_cells).reshape(len(test_cells),-1)
-
-        predicted_surp = reg.predict(test_cells)
-        r2 =skm.r2_score(ambiguous_targets,predicted_surp)
-
-        generalization_matrix[row][col] = max(0,r2)
-
-ax = sns.heatmap(generalization_matrix,vmin=0,vmax=1,annot=True, fmt="f")
-
-ax.invert_yaxis()
-ax.tick_params( labelsize='small')
-plt.xticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full)
-plt.xlabel('Training On')
-
-plt.yticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full)
-plt.ylabel('Testing On')
-
-plt.title('Clipped R^2 Scores')
-
-plt.savefig('ambiguous_generalization_matrix.png')
+    generalization_matrix = np.zeros((len(relevant_cols),len(relevant_cols)))
 
 
 
+    for col,training_column in enumerate(relevant_cols):
+
+        training_cells =temporal_cell_states[training_column]
+
+        training_cells = np.array(training_cells).reshape(len(training_cells),-1)
+
+        reg = sk.Ridge(alpha=10).fit(training_cells,targets)
+
+        for row,test_column in enumerate(relevant_cols):
+            test_cells = temporal_cell_states[test_column]
+
+            test_cells = np.array(test_cells).reshape(len(test_cells),-1)
+
+            predicted_surp = reg.predict(test_cells)
+            r2 =skm.r2_score(targets,predicted_surp)
+
+            generalization_matrix[row][col] = max(0,r2)
+
+    ax = sns.heatmap(generalization_matrix,vmin=0,vmax=1,annot=True, fmt="f")
+
+    ax.invert_yaxis()
+    ax.tick_params( labelsize='small', labelrotation=45)
+    plt.xticks(np.arange(len(relevant_cols))+0.5,relevant_cols)
+    plt.xlabel('Training On')
+
+    plt.yticks(np.arange(len(relevant_cols))+0.5,relevant_cols)
+    plt.ylabel('Testing On')
+
+    plt.title('Clipped R^2 Scores')
+
+    plt.savefig(save_name+'.png')
 
 
-#EOF
+
+generalization_matrix(ambiguous_cols_full,amb_temporal_cell_states,ambiguous_targets,'generalization_matrix_ambiguous_reduced')
+
+generalization_matrix(unambiguous_cols_full,unamb_temporal_cell_states,unambiguous_targets,'generalization_matrix_unambiguous_reduced')
+
+generalization_matrix(whowas_ambiguous_cols_full,whowas_amb_temporal_cell_states,unreduced_ambiguous_targets,'generalization_matrix_ambiguous_unreduced')
+
+generalization_matrix(whowas_unambiguous_cols_full,whowas_unamb_temporal_cell_states,unreduced_unambiguous_targets,'generalization_matrix_unambiguous_unreduced')
