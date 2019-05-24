@@ -35,10 +35,12 @@ parser.add_argument('--training_cells', type=str, default='reduced',
 parser.add_argument('--cross_validation',type=int,default=10,help='Amount of cross validation folds')
 parser.add_argument('--file_identifier', type=str, default='FINAL',
                     help='unique identifier for the files generated in this method [DO NOT USE SPACES]')
+args = parser.parse_args()
+
+import pdb; pdb.set_trace()
 
 ROOT = Path(__file__).absolute().parent.parent
 
-args = parser.parse_args()
 
 load_files = False
 
