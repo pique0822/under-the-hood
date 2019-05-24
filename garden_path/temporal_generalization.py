@@ -279,10 +279,10 @@ ax = sns.heatmap(generalization_matrix,vmin=0,vmax=1,annot=True, fmt="f")
 
 ax.invert_yaxis()
 
-plt.xticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full)
+plt.xticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full, labelsize='small')
 plt.xlabel('Training On')
 
-plt.yticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full)
+plt.yticks(np.arange(len(ambiguous_cols_full))+0.5,ambiguous_cols_full, labelsize='small')
 plt.ylabel('Testing On')
 
 plt.title('Clipped R^2 Scores')
