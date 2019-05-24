@@ -287,8 +287,11 @@ def generalization_matrix(relevant_cols,temporal_cell_states,targets,save_name,t
     plt.ylabel('Testing On')
 
     plt.title('Clipped R^2 Scores')
+    plt.tight_layout()
 
     plt.savefig(save_name+'.png')
+
+    plt.close()
 
 
 
