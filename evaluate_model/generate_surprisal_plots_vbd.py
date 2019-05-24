@@ -5,7 +5,7 @@ import seaborn as sns
 from scipy import stats
 
 decrease_file_base = 'surgical_gradient_r2_decrease_final_'
-file_title = 'Units from Reduced Data'
+file_title = ''
 
 # IGNORE WARNINGS
 import sys
@@ -234,7 +234,7 @@ plt.plot([0,1,2,3,4,5],average_surprisals_whowas_unambiguous[1:],color=flatui[3]
 
 gold_surp_df = pd.DataFrame.from_dict(surprisal_data)
 ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',join=False,data=gold_surp_df,order=['Noun','Unreduced content','Verb','RC contents','Disambiguator','End'], legend=False,label='_nolegend_',dodge=True)
-
+weight_test = []
 ### START DECREASE ###
 #
 # surprisal_data = {'Time':[],'Avg Surprisal':[],'File idx':[]}
@@ -372,10 +372,10 @@ ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',join=False,data=go
 # ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',data=surp_df,order=['Noun','Unreduced content','Verb','RC contents','Disambiguator','End'],join=False)
 # ### END INCREASE ###
 
-plt.title('Surprisal Decrease on Ambiguous Reduced :: '+file_title)
+plt.title('Averaged VBD Surprisal Plots')
 handles, labels = ax.get_legend_handles_labels()
 
 plt.legend(handles[0:4+len(weight_test)], labels[0:4+len(weight_test)])
 # plt.subplots_adjust(right=0.6)
 plt.tight_layout()
-plt.show()
+plt.savefig('surprisal_plots.png')
