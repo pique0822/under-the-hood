@@ -191,7 +191,7 @@ if not load_files:
                 unamb_temporal_cell_states[column] = []
                 unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        unambiguous_surprisal = prefix_to_avg[unambiguous_full
+        unambiguous_surprisal = prefix_to_avg[unambiguous_full]
         unambiguous_targets.append(unambiguous_surprisal)
 
 
@@ -281,7 +281,7 @@ plt.savefig('ambiguous_generalization_matrix.png')
 
 
 
-
+singularity shell -B /om2/ -B /om/group/cpl -B /net/storage001.ib.cluster/om2/user/drmiguel/representational_analysis/under-the-hood /om2/user/jgauthie/singularity_images/deepo-cpu.simg
 
 
 
