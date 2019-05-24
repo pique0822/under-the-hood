@@ -1,6 +1,6 @@
 ,Start,Noun,Unreduced content,Ambiguous verb,Unambiguous verb,RC contents,Intervener,Disambiguator,End
-0,The,troops,who were,attacked,woken,by the terrorists,,suffered,heavy losses. <eos>
-1,The,contestant,who was,selected,chosen,by the judges,,deserved,to win the competition. <eos>
+0,The,troops,who were,attacked,woken,by the terrorists,,suffered,heavy losses . <eos>
+1,The,contestant,who was,selected,chosen,by the judges,,deserved,to win the competition . <eos>
 2,The,teacher,who was,hated,forgotten,by the class,,knew,the way home . <eos>
 3,The,award,that was,accepted,taken,by the school,,indicated,its good reputation . <eos>
 4,The,letter,that was,sent,written,by the governor,,arrived,late . <eos>
