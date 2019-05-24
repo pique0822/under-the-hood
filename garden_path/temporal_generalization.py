@@ -217,8 +217,8 @@ if not load_files:
                 whowas_amb_temporal_cell_states[column] = []
                 whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        unreduced_ambiguous_targets = prefix_to_avg[ambiguous_full]
-        unreduced_ambiguous_targets.append(ambiguous_surprisal)
+        unreduced_ambiguous_surprisal = prefix_to_avg[ambiguous_full]
+        unreduced_ambiguous_targets.append(unreduced_ambiguous_surprisal)
 
 
         # Unreduced Unambiguous
