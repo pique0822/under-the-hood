@@ -121,7 +121,6 @@ unreduced_unambiguous_targets = []
 def surprisal_score(verb_surp,period_surp):
     return verb_surp-period_surp
 
-if not load_files:
 print('=== TESTING MODEL ===')
 for df_idx in tqdm(list(range(len(df)))):
     print('')
