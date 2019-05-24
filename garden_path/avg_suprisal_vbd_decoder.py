@@ -298,66 +298,66 @@ best_R2_reg = None
 
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
-    for exper_idx in tqdm(list(range(args.cross_validation)), desc="Experiment"):
-    # import pdb; pdb.set_trace()
-    training_indices = np.concatenate((shuffled_indices[0:int((exper_idx/args.cross_validation)*len(all_cells))],shuffled_indices[int((exper_idx+1/args.cross_validation)*len(all_cells)):]))
+        for exper_idx in tqdm(list(range(args.cross_validation)), desc="Experiment"):
+        # import pdb; pdb.set_trace()
+        training_indices = np.concatenate((shuffled_indices[0:int((exper_idx/args.cross_validation)*len(all_cells))],shuffled_indices[int((exper_idx+1/args.cross_validation)*len(all_cells)):]))
 
-    test_indices = shuffled_indices[int(exper_idx/args.cross_validation)*len(all_cells)):int((exper_idx+1)/args.cross_validation)*len(all_cells))]
+        test_indices = shuffled_indices[int(exper_idx/args.cross_validation)*len(all_cells)):int((exper_idx+1)/args.cross_validation)*len(all_cells))]
 
-    num_runs += 1
+        num_runs += 1
 
-    reg = sk.Ridge(alpha=alpha_value).fit(all_cells[training_indices],all_targets[training_indices])
+        reg = sk.Ridge(alpha=alpha_value).fit(all_cells[training_indices],all_targets[training_indices])
 
-    if all_coefs is None:
-        all_coefs = reg.coef_.copy()
-    else:
-        all_coefs = np.vstack((all_coefs,reg.coef_))
-
-    mean_coef = reg.coef_.mean()
-    std_coef = reg.coef_.std()
-    significant_coef_indices = np.where(np.abs(reg.coef_) > mean_coef + 3*std_coef)[0]
-    for coef_idx in significant_coef_indices:
-        if coef_idx in coef_count:
-        coef_count[coef_idx] += 1
+        if all_coefs is None:
+            all_coefs = reg.coef_.copy()
         else:
-        coef_count[coef_idx] = 1
+            all_coefs = np.vstack((all_coefs,reg.coef_))
 
-    predicted_surp = reg.predict(all_cells[test_indices])
+        mean_coef = reg.coef_.mean()
+        std_coef = reg.coef_.std()
+        significant_coef_indices = np.where(np.abs(reg.coef_) > mean_coef + 3*std_coef)[0]
+        for coef_idx in significant_coef_indices:
+            if coef_idx in coef_count:
+            coef_count[coef_idx] += 1
+            else:
+            coef_count[coef_idx] = 1
 
-    # print('EXP '+str(exper_idx)+':: Held Out R^2 Score',skm.r2_score(all_targets[test_indices],predicted_surp))
+        predicted_surp = reg.predict(all_cells[test_indices])
 
-    r2 =skm.r2_score(all_targets[test_indices],predicted_surp)
+        # print('EXP '+str(exper_idx)+':: Held Out R^2 Score',skm.r2_score(all_targets[test_indices],predicted_surp))
 
-    mean_R2 = (mean_R2*exper_idx + r2)/(exper_idx+1)
+        r2 =skm.r2_score(all_targets[test_indices],predicted_surp)
 
-    # print('EXP '+str(exper_idx)+':: Held Out MSE Score',skm.mean_squared_error(all_targets[test_indices],predicted_surp))
-    mse = skm.mean_squared_error(all_targets[test_indices],predicted_surp)
+        mean_R2 = (mean_R2*exper_idx + r2)/(exper_idx+1)
 
-    mean_MSE = (mean_MSE*exper_idx + mse)/(exper_idx + 1)
+        # print('EXP '+str(exper_idx)+':: Held Out MSE Score',skm.mean_squared_error(all_targets[test_indices],predicted_surp))
+        mse = skm.mean_squared_error(all_targets[test_indices],predicted_surp)
 
-    if mse > max_MSE:
-        max_MSE = mse
+        mean_MSE = (mean_MSE*exper_idx + mse)/(exper_idx + 1)
 
-    if mse < min_MSE:
-        min_MSE = mse
-        best_mse_reg = reg
+        if mse > max_MSE:
+            max_MSE = mse
 
-    if r2 > max_R2:
-        max_R2 = r2
-        best_R2_reg = reg
+        if mse < min_MSE:
+            min_MSE = mse
+            best_mse_reg = reg
 
-    if r2 < min_R2:
-        min_R2 = r2
+        if r2 > max_R2:
+            max_R2 = r2
+            best_R2_reg = reg
 
-    print('MEAN HELD OUT R^2',mean_R2)
-    print('MEAN HELD OUT MSE',mean_MSE)
+        if r2 < min_R2:
+            min_R2 = r2
 
-    print('MAX HELD OUT R^2',max_R2)
-    print('MIN HELD OUT R^2',min_R2)
+        print('MEAN HELD OUT R^2',mean_R2)
+        print('MEAN HELD OUT MSE',mean_MSE)
+
+        print('MAX HELD OUT R^2',max_R2)
+        print('MIN HELD OUT R^2',min_R2)
 
 
-    print('MAX HELD OUT MSE',max_MSE)
-    print('MIN HELD OUT MSE',min_MSE)
+        print('MAX HELD OUT MSE',max_MSE)
+        print('MIN HELD OUT MSE',min_MSE)
 
     coef_count_values = np.array(list(coef_count.values()))
     mean_coef_count = coef_count_values.mean()
