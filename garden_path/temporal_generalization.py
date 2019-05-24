@@ -165,8 +165,9 @@ if not load_files:
                 amb_temporal_cell_states[column] = []
                 amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        ambiguous_surprisal = prefix_to_avg[ambiguous_full]
-        ambiguous_targets.append(ambiguous_surprisal)
+        if ambiguous_full in prefix_to_avg:
+            ambiguous_surprisal = prefix_to_avg[ambiguous_full]
+            ambiguous_targets.append(ambiguous_surprisal)
 
 
         # Unambiguous
@@ -191,8 +192,9 @@ if not load_files:
                 unamb_temporal_cell_states[column] = []
                 unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        unambiguous_surprisal = prefix_to_avg[unambiguous_full]
-        unambiguous_targets.append(unambiguous_surprisal)
+        if unambiguous_full in prefix_to_avg:
+            unambiguous_surprisal = prefix_to_avg[unambiguous_full]
+            unambiguous_targets.append(unambiguous_surprisal)
 
 
         # Unreduced Ambiguous
@@ -217,8 +219,9 @@ if not load_files:
                 whowas_amb_temporal_cell_states[column] = []
                 whowas_amb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        unreduced_ambiguous_surprisal = prefix_to_avg[ambiguous_full]
-        unreduced_ambiguous_targets.append(unreduced_ambiguous_surprisal)
+        if whowas_unambiguous_full in prefix_to_avg:
+            unreduced_ambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
+            unreduced_ambiguous_targets.append(unreduced_ambiguous_surprisal)
 
 
         # Unreduced Unambiguous
@@ -243,8 +246,9 @@ if not load_files:
                 whowas_unamb_temporal_cell_states[column] = []
                 whowas_unamb_temporal_cell_states[column].append(hidden[1][1].detach().numpy())
 
-        unreduced_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
-        unreduced_unambiguous_targets.append(unreduced_unambiguous_surprisal)
+        if whowas_ambiguous_full in prefix_to_avg:
+            unreduced_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
+            unreduced_unambiguous_targets.append(unreduced_unambiguous_surprisal)
 # generating matrix
 
 generalization_matrix = np.zeros((len(ambiguous_cols_full),len(ambiguous_cols_full)))
