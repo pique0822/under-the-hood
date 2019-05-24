@@ -271,8 +271,8 @@ elif args.training_cells =='all':
     all_targets = np.concatenate((all_targets,unreduced_ambiguous_targets))
     all_targets = np.concatenate((all_targets,unreduced_unambiguous_targets))
 
-coef_count = {}
 
+coef_count = {}
 
 shuffled_indices = np.arange(len(all_cells))
 np.random.shuffle(shuffled_indices)
@@ -283,8 +283,8 @@ print('Training on '+str(int((args.cross_validation - 1)/args.cross_validation*l
 num_runs = 0
 all_coefs = None
 
-mean_MSE = 0
-mean_R2 = 0
+best_mse_alpha = 0
+best_r2_alpha = 0
 
 min_MSE = np.infty
 max_MSE = -np.infty
@@ -298,6 +298,10 @@ best_R2_reg = None
 
 for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     print('\nALPHA',alpha_value)
+
+    mean_MSE = 0
+    mean_R2 = 0
+
     for exper_idx in tqdm(list(range(args.cross_validation)), desc="Experiment"):
         # import pdb; pdb.set_trace()
         training_indices = np.concatenate((shuffled_indices[0:int((exper_idx/args.cross_validation)*len(all_cells))],shuffled_indices[int(((exper_idx+1)/args.cross_validation)*len(all_cells)):]))
@@ -341,39 +345,42 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
         if mse < min_MSE:
             min_MSE = mse
             best_mse_reg = reg
+            best_mse_alpha = alpha_value
 
         if r2 > max_R2:
             max_R2 = r2
             best_R2_reg = reg
+            best_r2_alpha = alpha_value
 
         if r2 < min_R2:
             min_R2 = r2
 
-        print('MEAN HELD OUT R^2',mean_R2)
-        print('MEAN HELD OUT MSE',mean_MSE)
+    print('MEAN HELD OUT R^2',mean_R2)
+    print('MEAN HELD OUT MSE',mean_MSE)
 
-        print('MAX HELD OUT R^2',max_R2)
-        print('MIN HELD OUT R^2',min_R2)
+print('MAX HELD OUT R^2',max_R2,'alpha',best_r2_alpha)
+print('MIN HELD OUT R^2',min_R2)
 
 
-        print('MAX HELD OUT MSE',max_MSE)
-        print('MIN HELD OUT MSE',min_MSE)
 
-    coef_count_values = np.array(list(coef_count.values()))
-    mean_coef_count = coef_count_values.mean()
-    std_coef_count = coef_count_values.std()
+print('MAX HELD OUT MSE',max_MSE)
+print('MIN HELD OUT MSE',min_MSE,'alpha',best_mse_alpha)
 
-    true_significance = mean_coef_count + 3*std_coef_count
+coef_count_values = np.array(list(coef_count.values()))
+mean_coef_count = coef_count_values.mean()
+std_coef_count = coef_count_values.std()
 
-    significant_coef_indices = []
+true_significance = mean_coef_count + 3*std_coef_count
 
-    for index,count in coef_count.items():
-        if count > true_significance:
-            significant_coef_indices.append(index)
+significant_coef_indices = []
+
+for index,count in coef_count.items():
+    if count > true_significance:
+        significant_coef_indices.append(index)
 
     # This was added becaues only one coefficient comes up as significant
-    if len(coef_count) == 1:
-        significant_coef_indices = list(coef_count.keys())
+if len(coef_count) == 1:
+    significant_coef_indices = list(coef_count.keys())
     # print('True Significant Units',significant_coef_indices)
     # print('Coefficient Signs')
     # predict_ambiguous_sign = []
@@ -382,13 +389,13 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     #     print(c,reg.coef_[c])
     #     predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
 
-    print('\n\nBEST R^2 REG')
-    for c in significant_coef_indices:
-        print(c,best_R2_reg.coef_[c])
+print('\n\nSMOOTHED BEST R^2 SIGNIFICANCE')
+for c in significant_coef_indices:
+    print(c,best_R2_reg.coef_[c])
 
-    print('\n\nBEST MSE REG')
-    for c in significant_coef_indices:
-        print(c,best_mse_reg.coef_[c])
+print('\n\nSMOOTHED BEST MSE REG SIGNIFICANCE')
+for c in significant_coef_indices:
+    print(c,best_mse_reg.coef_[c])
 
 # import pdb; pdb.set_trace()
 # mean_coefficients = all_coefs.mean(0)
