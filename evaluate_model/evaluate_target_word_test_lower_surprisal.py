@@ -48,14 +48,17 @@ parser.add_argument('--modify_cell', type=bool, default=False,
                     help='Modify the cell state at the RC Verb')
 parser.add_argument('--surgical_difference', type=float, default=1.0,
                     help='constant to be used to set the cells at the RC Verb')
-
+parser.add_argument('--file_identifier', type=str, default='',
+                    help='Identifier for the .pkl files with the relevant significant units')
+parser.add_argument('--gradient_type', type=bool, default='weight',
+                    help='Type of gradient step to modify the x values {loss | weight}')
 args = parser.parse_args()
 
 ROOT = Path(__file__).absolute().parent.parent
 
-significant_coef_indices = pickle.load(open(ROOT / 'garden_path'/'best_coefs'/'significant_coefs_vbd_FINAL.pkl','rb+'))
+significant_coef_indices = pickle.load(open(ROOT / 'garden_path'/'best_coefs'/'significant_coefs_'+args.file_identifier+'.pkl','rb+'))
 
-best_r2_reg = np.load(open(ROOT/'garden_path'/'best_coefs'/'best_r2_coefs_vbd_FINAL.pkl','rb+'))
+best_r2_reg = np.load(open(ROOT/'garden_path'/'best_coefs'/'best_r2_coefs_'+args.file_identifier+'.pkl','rb+'))
 
 
 
@@ -177,42 +180,28 @@ if args.surprisalmode:
             word_weights = output.squeeze().div(args.temperature).exp().cpu()
             word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
             for widx, word in enumerate(sentence[1:len(prefix)]):
-                  word_surprisal = word_surprisals[word].item()
-                  outf.write(dictionary.idx2word[word.item()] + "\t" + str(word_surprisal) + "\n")
-                  print(dictionary.idx2word[word.item()] + "\t" + str(word_surprisal) + "\n")
-                  input.fill_(word.item())
-                  output, hidden = model(input, hidden)
+                word_surprisal = word_surprisals[word].item()
+                outf.write(dictionary.idx2word[word.item()] + "\t" + str(word_surprisal) + "\n")
+                print(dictionary.idx2word[word.item()] + "\t" + str(word_surprisal) + "\n")
+                input.fill_(word.item())
+                output, hidden = model(input, hidden)
                   # widx == 1 means we are at the RC verb
                   # We only want to modify if the args say so
                   # every fourth sentence starting with the first is ambiguous
-                  if widx == words_to_skip-2 and args.modify_cell:
-                      print('MODIFY HERE',dictionary.idx2word[word.item()] )
-                      # significant_coef_indices = [27, 49, 100, 112, 132, 240, 257, 277, 306, 337, 374, 396, 499, 555, 576, 627]
-                      # significant_signs =  [1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0]
-                      # significant_coef_indices = [189, 533, 43, 143] # this is for the difference between verb and period
-                      # significant_signs = [1,-1,-1,-1]
-                      # significant_signs = [1, -1, -1, 1] # this is for predicting simply surprisal of verb
-                      # [183, 43, 143, 639, 247] This is to predict the surprisal of the period down the line
-                      # significant_signs = [-1, -1, 1, -1, -1]
+                if widx == words_to_skip-2 and args.modify_cell:
+                    print('MODIFY HERE',dictionary.idx2word[word.item()] )
 
-                      # using 2std as true significance
-                      # significant_coef_indices = [183, 277, 189, 381, 533, 15, 43, 143, 364, 39, 376, 387, 642, 247]
-                      # significant_signs = [-1,-1,1,1,-1,-1,-1,-1,1,-1,-1,1,1,-1]
+                    for coef_idx in range(len(significant_coef_indices)):
+                        modified_unit = significant_coef_indices[coef_idx]
 
-                      # all 2 std
-                      # significant_coef_indices = [43, 49, 153, 183, 277, 383, 388, 517, 540, 87, 189, 211, 376, 381, 533, 15, 143, 364, 609, 39, 104, 387, 247, 151, 636, 250, 325, 435]
-                      # significant_signs = [-1,-1,1,-1,-1,-1,-1,1,1,-1,1,1,-1,1,-1,-1,-1,1,1,-1,1,1,-1,-1,-1,-1,1,-1]
-                      for coef_idx in range(len(significant_coef_indices)):
-                          modified_unit = significant_coef_indices[coef_idx]
+                        if args.gradient_type == 'loss':
+                            gradient = 2*(0 - best_r2_reg.coef_[modified_unit]*hidden[1][1][0,modified_unit] - best_r2_reg.intercept_)*(-best_r2_reg.coef_[modified_unit])
 
-                          gradient = 2*(0 - best_r2_reg.coef_[modified_unit]*hidden[1][1][0,modified_unit] - best_r2_reg.intercept_)*(-best_r2_reg.coef_[modified_unit])
+                        elif args.gradient_type == 'weight':
+                            gradient = best_r2_reg.coef_[modified_unit]
 
-                          # gradient = best_r2_reg.coef_[modified_unit]
+                        hidden[1][1][0,modified_unit] = hidden[1][1][0,modified_unit] -args.surgical_difference *float(gradient)
 
-                          hidden[1][1][0,modified_unit] = hidden[1][1][0,modified_unit] -args.surgical_difference *float(gradient)
-                          # if hidden_sign == significant_signs[coef_idx]:
-                          #
-                          #     hidden[1][1][0,modified_unit] = -hidden[1][1][0,modified_unit]
 
                   word_weights = output.squeeze().div(args.temperature).exp().cpu()
                   word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
