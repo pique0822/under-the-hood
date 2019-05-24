@@ -402,5 +402,7 @@ handles, labels = ax.get_legend_handles_labels()
 
 plt.legend(handles[0:4+len(weight_test)], labels[0:4+len(weight_test)])
 # plt.subplots_adjust(right=0.6)
+plt.tick_params( labelsize='small', labelrotation=45)
+
 plt.tight_layout()
 plt.savefig(args.save_file+'.png')
