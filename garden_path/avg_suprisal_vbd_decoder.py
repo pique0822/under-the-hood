@@ -318,9 +318,9 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
         significant_coef_indices = np.where(np.abs(reg.coef_) > mean_coef + 3*std_coef)[0]
         for coef_idx in significant_coef_indices:
             if coef_idx in coef_count:
-            coef_count[coef_idx] += 1
+                coef_count[coef_idx] += 1
             else:
-            coef_count[coef_idx] = 1
+                coef_count[coef_idx] = 1
 
         predicted_surp = reg.predict(all_cells[test_indices])
 
@@ -368,12 +368,12 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     significant_coef_indices = []
 
     for index,count in coef_count.items():
-    if count > true_significance:
-        significant_coef_indices.append(index)
+        if count > true_significance:
+            significant_coef_indices.append(index)
 
     # This was added becaues only one coefficient comes up as significant
     if len(coef_count) == 1:
-    significant_coef_indices = list(coef_count.keys())
+        significant_coef_indices = list(coef_count.keys())
     # print('True Significant Units',significant_coef_indices)
     # print('Coefficient Signs')
     # predict_ambiguous_sign = []
@@ -384,11 +384,11 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
 
     print('\n\nBEST R^2 REG')
     for c in significant_coef_indices:
-    print(c,best_R2_reg.coef_[c])
+        print(c,best_R2_reg.coef_[c])
 
     print('\n\nBEST MSE REG')
     for c in significant_coef_indices:
-    print(c,best_mse_reg.coef_[c])
+        print(c,best_mse_reg.coef_[c])
 
 # import pdb; pdb.set_trace()
 # mean_coefficients = all_coefs.mean(0)
