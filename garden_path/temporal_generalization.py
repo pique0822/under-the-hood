@@ -268,7 +268,8 @@ for col,training_column in enumerate(ambiguous_cols_full):
 
         test_cells = np.array(test_cells).reshape(len(test_cells),-1)
 
-        r2 =skm.r2_score(test_cells,ambiguous_targets)
+        predicted_surp = reg.predict(test_cells)
+        r2 =skm.r2_score(ambiguous_targets,predicted_surp)
 
         generalization_matrix[row][col] = max(0,r2)
 
