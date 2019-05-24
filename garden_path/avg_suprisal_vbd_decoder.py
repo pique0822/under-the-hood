@@ -35,6 +35,8 @@ parser.add_argument('--training_cells', type=str, default='reduced',
 parser.add_argument('--cross_validation',type=int,default=10,help='Amount of cross validation folds')
 parser.add_argument('--file_identifier', type=str, default='TEST',
                     help='unique identifier for the files generated in this method [DO NOT USE SPACES]')
+parser.add_argument('--smoothed_significance', type=bool, default=False,
+            help='Smoothed significance flag')
 args = parser.parse_args()
 
 ROOT = Path(__file__).absolute().parent.parent
@@ -366,48 +368,51 @@ print('MIN HELD OUT R^2',min_R2)
 print('MAX HELD OUT MSE',max_MSE)
 print('MIN HELD OUT MSE',min_MSE,'alpha',best_mse_alpha)
 
-coef_count_values = np.array(list(coef_count.values()))
-mean_coef_count = coef_count_values.mean()
-std_coef_count = coef_count_values.std()
 
-true_significance = mean_coef_count + 3*std_coef_count
+if args.smoothed_significance:
+    coef_count_values = np.array(list(coef_count.values()))
+    mean_coef_count = coef_count_values.mean()
+    std_coef_count = coef_count_values.std()
 
-significant_coef_indices = []
+    true_significance = mean_coef_count + 3*std_coef_count
 
-for index,count in coef_count.items():
-    if count > true_significance:
-        significant_coef_indices.append(index)
+    significant_coef_indices = []
 
-    # This was added becaues only one coefficient comes up as significant
-if len(coef_count) == 1:
-    significant_coef_indices = list(coef_count.keys())
-    # print('True Significant Units',significant_coef_indices)
-    # print('Coefficient Signs')
-    # predict_ambiguous_sign = []
-    #
-    # for c in significant_coef_indices:
-    #     print(c,reg.coef_[c])
-    #     predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
+    for index,count in coef_count.items():
+        if count > true_significance:
+            significant_coef_indices.append(index)
 
-print('\n\nSMOOTHED BEST R^2 SIGNIFICANCE')
-for c in significant_coef_indices:
-    print(c,best_R2_reg.coef_[c])
+        # This was added becaues only one coefficient comes up as significant
+    if len(coef_count) == 1:
+        significant_coef_indices = list(coef_count.keys())
+        # print('True Significant Units',significant_coef_indices)
+        # print('Coefficient Signs')
+        # predict_ambiguous_sign = []
+        #
+        # for c in significant_coef_indices:
+        #     print(c,reg.coef_[c])
+        #     predict_ambiguous_sign.append(np.sign(reg.coef_[c]))
 
-print('\n\nSMOOTHED BEST MSE REG SIGNIFICANCE')
-for c in significant_coef_indices:
-    print(c,best_mse_reg.coef_[c])
+    print('\n\nSMOOTHED BEST R^2 SIGNIFICANCE')
+    for c in significant_coef_indices:
+        print(c,best_R2_reg.coef_[c])
+
+    print('\n\nSMOOTHED BEST MSE REG SIGNIFICANCE')
+    for c in significant_coef_indices:
+        print(c,best_mse_reg.coef_[c])
 
 # import pdb; pdb.set_trace()
 # mean_coefficients = all_coefs.mean(0)
 # std_coefficients = all_coeffs.mean(0)
 
 # REMOVE THIS FOR ORIGINAL
-mean_coef = best_R2_reg.coef_.mean()
-std_coef = best_R2_reg.coef_.std()
-significant_coef_indices = np.where(np.abs(best_R2_reg.coef_) > mean_coef + 3*std_coef)[0]
-print('True Significant Units',significant_coef_indices)
-for c in significant_coef_indices:
-    print(c,best_R2_reg.coef_[c])
+else:
+    mean_coef = best_R2_reg.coef_.mean()
+    std_coef = best_R2_reg.coef_.std()
+    significant_coef_indices = np.where(np.abs(best_R2_reg.coef_) > mean_coef + 3*std_coef)[0]
+    print('True Significant Units',significant_coef_indices)
+    for c in significant_coef_indices:
+        print(c,best_R2_reg.coef_[c])
 #######
 
 
