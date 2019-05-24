@@ -193,7 +193,7 @@ if args.surprisalmode:
 
                     for coef_idx in range(len(significant_coef_indices)):
                         modified_unit = significant_coef_indices[coef_idx]
-
+                        import pdb; pdb.set_trace()
                         if str(args.gradient_type) == 'loss':
                             gradient = 2*(0 - best_r2_reg.coef_[modified_unit]*hidden[1][1][0,modified_unit] - best_r2_reg.intercept_)*(-best_r2_reg.coef_[modified_unit])
 
