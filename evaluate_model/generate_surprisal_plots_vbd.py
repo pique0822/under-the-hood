@@ -5,7 +5,7 @@ import seaborn as sns
 from scipy import stats
 
 decrease_file_base = 'surgical_gradient_r2_decrease_final_'
-file_title = ''
+file_title = 'Units from Reduced Data'
 
 # IGNORE WARNINGS
 import sys
@@ -114,8 +114,11 @@ with open('gold_standard.txt','r') as text_file:
                 for idx in range(words_idx + 1, new_words_idx-1):
                     surp += surprisals[idx]
             else:
-                for idx in range(words_idx + 1, new_words_idx+1):
-                    surp += surprisals[idx]
+                if col is 'Disambiguator' and ambiguous_prefix in prefix_to_avg:
+                    surp+= prefix_to_avg[ambiguous_prefix]
+                else:
+                    for idx in range(words_idx + 1, new_words_idx+1):
+                        surp += surprisals[idx]
 
             words_idx = new_words_idx
             average_surprisals_ambiguous[cidx] = (average_surprisals_ambiguous[cidx]*ridx + surp)/(ridx + 1)
@@ -144,8 +147,11 @@ with open('gold_standard.txt','r') as text_file:
                 for idx in range(words_idx + 1, new_words_idx-1):
                     surp += surprisals[idx]
             else:
-                for idx in range(words_idx + 1, new_words_idx+1):
-                    surp += surprisals[idx]
+                if col is 'Disambiguator' and whowas_ambiguous_prefix in prefix_to_avg:
+                    surp+= prefix_to_avg[whowas_ambiguous_prefix]
+                else:
+                    for idx in range(words_idx + 1, new_words_idx+1):
+                        surp += surprisals[idx]
 
             words_idx = new_words_idx
             average_surprisals_whowas_ambiguous[cidx] = (average_surprisals_whowas_ambiguous[cidx]*ridx + surp)/(ridx + 1)
@@ -174,8 +180,11 @@ with open('gold_standard.txt','r') as text_file:
                 for idx in range(words_idx + 1, new_words_idx-1):
                     surp += surprisals[idx]
             else:
-                for idx in range(words_idx + 1, new_words_idx+1):
-                    surp += surprisals[idx]
+                if col is 'Disambiguator' and unambiguous_prefix in prefix_to_avg:
+                    surp+= prefix_to_avg[unambiguous_prefix]
+                else:
+                    for idx in range(words_idx + 1, new_words_idx+1):
+                        surp += surprisals[idx]
 
             words_idx = new_words_idx
 
@@ -205,8 +214,11 @@ with open('gold_standard.txt','r') as text_file:
                 for idx in range(words_idx + 1, new_words_idx-1):
                     surp += surprisals[idx]
             else:
-                for idx in range(words_idx + 1, new_words_idx+1):
-                    surp += surprisals[idx]
+                if col is 'Disambiguator' and whowas_unambiguous_prefix in prefix_to_avg:
+                    surp+= prefix_to_avg[whowas_unambiguous_prefix]
+                else:
+                    for idx in range(words_idx + 1, new_words_idx+1):
+                        surp += surprisals[idx]
 
             words_idx = new_words_idx
 
@@ -372,7 +384,7 @@ weight_test = []
 # ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',data=surp_df,order=['Noun','Unreduced content','Verb','RC contents','Disambiguator','End'],join=False)
 # ### END INCREASE ###
 
-plt.title('Averaged VBD Surprisal Plots')
+plt.title('Averaged VBD Surprisal Plots :: '+file_title)
 handles, labels = ax.get_legend_handles_labels()
 
 plt.legend(handles[0:4+len(weight_test)], labels[0:4+len(weight_test)])
