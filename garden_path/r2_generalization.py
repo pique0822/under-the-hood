@@ -23,6 +23,8 @@ import sklearn.metrics as skm
 import pickle
 from tqdm import tqdm
 
+import seaborn as sns
+
 ROOT = Path(__file__).absolute().parent.parent
 model_path = '/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt'
 save_location = 'DCs'
@@ -504,10 +506,20 @@ gen_matrix = [[0,0],[0,0]]
 gen_matrix[0][0] = max(0,reduced_best_R2_reg.score(reduced_cells,reduced_targets))
 gen_matrix[0][1] = max(reduced_best_R2_reg.score(all_cells,all_targets),0)
 
-gen_matrix[0][0] = max(all_best_R2_reg.score(reduced_cells,reduced_targets),0)
-gen_matrix[0][1] = max(all_best_R2_reg.score(all_cells,all_targets),0)
+gen_matrix[1][0] = max(all_best_R2_reg.score(reduced_cells,reduced_targets),0)
+gen_matrix[1][1] = max(all_best_R2_reg.score(all_cells,all_targets),0)
 
 
-plt.imshow(gen_matrix,origin='lower')
-plt.colorbar()
+ax = sns.heatmap(gen_matrix,vmin=0,vmax=1,annot=True, fmt="f")
+
+ax.invert_yaxis()
+
+plt.xticks([0.5,1.5],['Reduced','All'])
+plt.xlabel('Training On')
+
+plt.yticks([0.5,1.5],['Reduced','All'])
+plt.ylabel('Testing On')
+
+plt.title('Best Held Out R^2 Scores')
+
 plt.savefig('training_matrix.png')
