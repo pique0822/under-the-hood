@@ -203,5 +203,5 @@ if args.surprisalmode:
                         hidden[1][1][0,modified_unit] = hidden[1][1][0,modified_unit] -args.surgical_difference *float(gradient)
 
 
-                  word_weights = output.squeeze().div(args.temperature).exp().cpu()
-                  word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
+                word_weights = output.squeeze().div(args.temperature).exp().cpu()
+                word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
