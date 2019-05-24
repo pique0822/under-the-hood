@@ -1,6 +1,6 @@
 source,idx,Start,Noun,Unreduced content,Ambiguous verb,Unambiguous verb,RC contents,Intervener,Disambiguator,End
-clifton2003,0,The,troops,who were,attacked,woken,by the terrorists,,suffered,heavy losses. <eos>
-clifton2003,1,The,contestant,who was,selected,chosen,by the judges,,deserved,to win the competition. <eos>
+clifton2003,0,The,troops,who were,attacked,woken,by the terrorists,,suffered,heavy losses . <eos>
+clifton2003,1,The,contestant,who was,selected,chosen,by the judges,,deserved,to win the competition . <eos>
 clifton2003,2,The,teacher,who was,hated,forgotten,by the class,,knew,the way home . <eos>
 clifton2003,3,The,award,that was,accepted,taken,by the school,,indicated,its good reputation . <eos>
 clifton2003,4,The,letter,that was,sent,written,by the governor,,arrived,late . <eos>
