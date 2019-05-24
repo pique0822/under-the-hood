@@ -407,7 +407,7 @@ std_coef = best_R2_reg.coef_.std()
 significant_coef_indices = np.where(np.abs(best_R2_reg.coef_) > mean_coef + 3*std_coef)[0]
 print('True Significant Units',significant_coef_indices)
 for c in significant_coef_indices:
-    print(c,reg.coef_[c])
+    print(c,best_R2_reg.coef_[c])
 #######
 
 
