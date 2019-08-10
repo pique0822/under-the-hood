@@ -1,51 +1,51 @@
-source,idx,Start,Noun,Unreduced content,Ambiguous verb,Unambiguous verb,RC contents,Intervener,Disambiguator,End
-clifton2003,0,The,troops,who were,attacked,woken,by the terrorists,,suffered,heavy losses . <eos>
-clifton2003,1,The,contestant,who was,selected,chosen,by the judges,,deserved,to win the competition . <eos>
-clifton2003,2,The,teacher,who was,hated,forgotten,by the class,,knew,the way home . <eos>
-clifton2003,3,The,award,that was,accepted,taken,by the school,,indicated,its good reputation . <eos>
-clifton2003,4,The,letter,that was,sent,written,by the governor,,arrived,late . <eos>
-clifton2003,5,The,portrait,that was,sketched,drawn,by the artist,,showed,her good side . <eos>
-clifton2003,6,The,specialist,who was,requested,known,by the hospital,,helped,the patients . <eos>
-clifton2003,7,The,book,that was,read,begun,by the student,,addressed,some important issues . <eos>
-clifton2003,8,The,mailman,who was,expected,driven,by the secretary,,was,delayed . <eos>
-clifton2003,9,The,van,that was,recognized,seen,by the spy,,sped,down the street . <eos>
-clifton2003,10,The,car,that was,towed,taken,by the police,,contained,narcotics . <eos>
-clifton2003,11,The,speaker,who was,proposed,chosen,by the committee,,gave,a talk . <eos>
-futrell,0,The,woman,who was,brought,given,the sandwich from the kitchen,with a new oven,tripped,on the carpet . <eos>
-futrell,1,The,captive,who was,walked,taken,into the dark cave,lit by torches,tried,to escape but failed . <eos>
-futrell,2,The,prisoners,who were,pounded,beaten,for hours and hours,in the morning,confessed,to crimes they never committed . <eos>
-futrell,3,The,business,that was,expanded,grown,into an empire,spanning multiple countries,was,sold for billions of dollars . <eos>
-futrell,4,The,rats,that were,consumed,eaten,rapidly and entirely,due to great hunger,were,digested in the belly of the cat . <eos>
-futrell,5,The,lawyer,that was,pledged,sworn,to complete secrecy,due to security issues,was,discovered to have broken his promise . <eos>
-futrell,6,The,child,who was,neglected,forgotten,in the chaos,of the war,found,her way back home . <eos>
-futrell,7,The,horses,that were,raced,ridden,past the barn,in the countryside,fell,into a ditch . <eos>
-futrell,8,The,artist,who was,sketched,drawn,a hasty portrait,of the woman,was,impressed with the work . <eos>
-futrell,9,The,car,that was,steered,driven,into the garage,filled with tools,crashed,into a concrete pillar . <eos>
-futrell,10,The,campaign,that was,intended,known,to be very popular,among the masses,was,still unsuccessful . <eos>
-futrell,11,The,student,who was,composed,written,a carefully worded excuse,filled with lies,forgot,to give it to the teacher . <eos>
-futrell,12,The,television show,that was,started,begun,three weeks ago,on a cable channel,was,cancelled immediately . <eos>
-futrell,13,The,boys,who were,performed,done,an unsolicited favor,for no good reason,thanked,the person who helped them . <eos>
-futrell,14,The,player,who was,tossed,thrown,the plastic frisbee,during the game,dropped,it on the ground . <eos>
-futrell,15,The,man,who was,stabbed,bitten,deeply and fatally,in the afternoon,died,very quickly . <eos>
-futrell,16,The,child,who was,jumped,leapt,completely past,in the playground,was,upset about it . <eos>
-futrell,17,The,students,who were,prepared,gotten,a fancy dinner,for the holiday,ate,the meal quickly . <eos>
-futrell,18,The,infant,that was,fed,woken,during the night,of the first full moon,cried,intensely . <eos>
-futrell,19,The,convict,who was,stowed,hidden,away in the basement,filled with mold,escaped,during the night . <eos>
-futrell,20,The,dog,that was,promenaded,seen,on the boardwalk,of the marina,barked,at the onlookers . <eos>
-futrell,21,The,ship,that was,navigated,blown,off course,in the Pacific Ocean,sank,on the reef . <eos>
-futrell,22,The,balloon,that was,deflated,shrunk,to a small size,over several hours,popped,with a bang . <eos>
-futrell,23,The,boat,that was,sailed,sunk,in the lake,filled with crocodiles,disappeared,in the storm . <eos>
-futrell,24,The,couple,that was,bought,shown,the apartment,with new wood floors,moved,to a different city . <eos>
-futrell,25,The ,girl,who was,stitched,woven,a new shawl,out of wool,lost,it during the trip . <eos>
-futrell,26,The,airplane,that was,landed,flown,in the arctic,in the winter,froze,during the ice storm . <eos>
-futrell,27,The,toddler,that was,hurried,borne,down the hallway,of the school,sobbed,at the top of his lungs . <eos>
-levy2009,0,The,professor,who was,taught,given,a dancing lesson,by the experienced instructor,shared,the video . <eos>
-levy2009,1,The,customer,who was,allowed,forbidden,the pleasure of eating sweets,by his doctor,became,much healthier . <eos>
-levy2009,2,The,player,who was,tossed,thrown,a frisbee,by the opposing team,scored,a goal . <eos>
-levy2009,3,The,woman,who was,offered,given,a beer,by the hostess,forgot,to leave a tip . <eos>
-levy2009,4,The,waiter,who was,served,given,pea soup,by a trainee,felt,let down . <eos>
-levy2009,5,The,man,who was,rented,shown,an apartment,by his uncle,made,an offer . <eos>
-levy2009,6,The,woman,who was,knitted,woven,a shawl,by her mother,wore,it to the wedding . <eos>
-levy2009,7,The,sergeant,who was,presented,shown,a list of charges,by the judge,failed,to appear . <eos>
-levy2009,8,The,congressman,who was,mailed,written,a letter,by the CEO,won,the election . <eos>
-levy2009,9,The,athlete,who was,hurled,thrown,a pass,by the quarterback,fell,on the ground . <eos>
+source,idx,Start,Noun,Unreduced content,Ambiguous verb,Unambiguous verb,RC contents,RC extra contents pre by-phrase,RC by-phrase,RC extra contents post by-phrase,Disambiguator,End
+clifton2003,0,The,troops,who were,attacked,woken,,,by the terrorists,,suffered,heavy losses . <eos>
+clifton2003,1,The,contestant,who was,selected,chosen,,,by the judges,,deserved,to win the competition . <eos>
+clifton2003,2,The,teacher,who was,hated,forgotten,,,by the class,,knew,the way home . <eos>
+clifton2003,3,The,award,that was,accepted,taken,,,by the school,,indicated,its good reputation . <eos>
+clifton2003,4,The,letter,that was,sent,written,,,by the governor,,arrived,late . <eos>
+clifton2003,5,The,portrait,that was,sketched,drawn,,,by the artist,,showed,her good side . <eos>
+clifton2003,6,The,specialist,who was,requested,known,,,by the hospital,,helped,the patients . <eos>
+clifton2003,7,The,book,that was,read,begun,,,by the student,,addressed,some important issues . <eos>
+clifton2003,8,The,mailman,who was,expected,driven,,,by the secretary,,was,delayed . <eos>
+clifton2003,9,The,van,that was,recognized,seen,,,by the spy,,sped,down the street . <eos>
+clifton2003,10,The,car,that was,towed,taken,,,by the police,,contained,narcotics . <eos>
+clifton2003,11,The,speaker,who was,proposed,chosen,,,by the committee,,gave,a talk . <eos>
+futrell-modified,0,The,woman,who was,brought,given,the sandwich,with a new oven,by the maid,from the kitchen,tripped,on the carpet . <eos>
+futrell-modified,1,The,captive,who was,walked,taken,into the dark cave,lit by torches,by the guards,,tried,to escape but failed . <eos>
+futrell-modified,2,The,prisoners,who were,pounded,beaten,for hours and hours,,by the soldiers,in the morning,confessed,to crimes they never committed . <eos>
+futrell-modified,3,The,business,that was,expanded,grown,into an empire,spanning multiple countries,by the manager,,was,sold for billions of dollars . <eos>
+futrell-modified,4,The,rats,that were,consumed,eaten,rapidly and entirely,,by the cat,due to great hunger,were,digested in the belly of the cat . <eos>
+futrell-modified,5,The,lawyer,that was,pledged,sworn,to complete secrecy,,by the client,due to security issues,was,discovered to have broken his promise . <eos>
+futrell-modified,6,The,child,who was,neglected,forgotten,in the chaos,of the war,by the town,,found,her way back home . <eos>
+futrell-modified,7,The,horses,that were,raced,ridden,past the barn,,by the men,in the countryside,fell,into a ditch . <eos>
+futrell-modified,8,The,artist,who was,sketched,drawn,a hasty portrait,,by the amateur,before the deadline,was,impressed with the work . <eos>
+futrell-modified,9,The,car,that was,steered,driven,into the garage,filled with tools,by the child,,crashed,into a concrete pillar . <eos>
+futrell-modified,10,The,campaign,that was,intended,known,to be very popular,among the masses,by the organizers,,was,still unsuccessful . <eos>
+futrell-modified,11,The,student,who was,composed,written,a carefully worded excuse,filled with lies,by his sister,,forgot,to give it to the teacher . <eos>
+futrell-modified,12,The,television show,that was,started,begun,three weeks ago,,by the entrepreneur,on a cable channel,was,cancelled immediately . <eos>
+futrell-modified,13,The,boys,who were,performed,done,an unsolicited favor,,by a person,for no good reason,thanked,the person who helped them . <eos>
+futrell-modified,14,The,player,who was,tossed,thrown,the plastic frisbee,,by her teammate,during the game,dropped,it on the ground . <eos>
+futrell-modified,15,The,man,who was,stabbed,bitten,deeply and fatally,in the afternoon,by the attacker,,died,very quickly . <eos>
+futrell-modified,16,The,child,who was,jumped,leapt,completely past,,by the other child,in the playground,was,upset about it . <eos>
+futrell-modified,17,The,students,who were,prepared,gotten,a fancy dinner,for the holiday,by their parents,,ate,the meal quickly . <eos>
+futrell-modified,18,The,infant,that was,fed,woken,during the night,of the first full moon,by the noise,,cried,intensely . <eos>
+futrell-modified,19,The,convict,who was,stowed,hidden,away in the basement,filled with mold,by the warden,,escaped,during the night . <eos>
+futrell-modified,20,The,dog,that was,promenaded,seen,on the boardwalk,of the marina,by its owner,,barked,at the onlookers . <eos>
+futrell-modified,21,The,ship,that was,navigated,blown,off course,,by the wind,in the Pacific Ocean,sank,on the reef . <eos>
+futrell-modified,22,The,balloon,that was,deflated,shrunk,to a small size,over several hours,by the pressure change,,popped,with a bang . <eos>
+futrell-modified,23,The,boat,that was,sailed,sunk,in the lake,filled with crocodiles,by the captain,,disappeared,in the storm . <eos>
+futrell-modified,24,The,couple,that was,bought,shown,the apartment,with new wood floors,by the realtor,,moved,to a different city . <eos>
+futrell-modified,25,The ,girl,who was,stitched,woven,a new shawl,out of wool,by her grandmother,,lost,it during the trip . <eos>
+futrell-modified,26,The,airplane,that was,landed,flown,in the arctic,,by the pilot,in the winter,froze,during the ice storm . <eos>
+futrell-modified,27,The,toddler,that was,hurried,borne,down the hallway,,by the principal,of the school,sobbed,at the top of his lungs . <eos>
+levy2009,0,The,professor,who was,taught,given,a dancing lesson,,by the experienced instructor,,shared,the video . <eos>
+levy2009,1,The,customer,who was,allowed,forbidden,the pleasure of eating sweets,,by his doctor,,became,much healthier . <eos>
+levy2009,2,The,player,who was,tossed,thrown,a frisbee,,by the opposing team,,scored,a goal . <eos>
+levy2009,3,The,woman,who was,offered,given,a beer,,by the hostess,,forgot,to leave a tip . <eos>
+levy2009,4,The,waiter,who was,served,given,pea soup,,by a trainee,,felt,let down . <eos>
+levy2009,5,The,man,who was,rented,shown,an apartment,,by his uncle,,made,an offer . <eos>
+levy2009,6,The,woman,who was,knitted,woven,a shawl,,by her mother,,wore,it to the wedding . <eos>
+levy2009,7,The,sergeant,who was,presented,shown,a list of charges,,by the judge,,failed,to appear . <eos>
+levy2009,8,The,congressman,who was,mailed,written,a letter,,by the CEO,,won,the election . <eos>
+levy2009,9,The,athlete,who was,hurled,thrown,a pass,,by the quarterback,,fell,on the ground . <eos>
