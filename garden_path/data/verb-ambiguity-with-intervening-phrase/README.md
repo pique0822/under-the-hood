@@ -3,6 +3,7 @@ This directory consists of slightly-modified experimental stimuli extracted from
 Each CSV row has the following columns:
 
 - Start
+- Noun modifier
 - Noun
 - Unreduced content
 - Ambiguous verb
@@ -15,6 +16,13 @@ Each CSV row has the following columns:
 - End
 
 ## Data sources
+
+Modifications common to all data sources:
+
+- added optional noun modifiers
+- distinguished between relative clause contents which are by-phrases and other RC contents
+
+---
 
 - `futrell-modified` is a modified form of [the MV/RC ambiguity stimuli from Futrell et al. (2018): *RNNs as psycholinguistic subjects*][1]. The original data does not differentiate between *by*-phrases and other RC contents; we added by-phrases to this data.
 - `clifton2003` is a highly selective subset of the stimuli from [Clifton et al. (2003): *The use of thematic role information in parsing.*][2] We retained only the most plausible stimuli, and used a more diverse set of disambiguating verbs than those in the original stimuli (originally dominated by "was" and "were").
