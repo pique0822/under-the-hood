@@ -4,8 +4,19 @@ import seaborn as sns
 
 from scipy import stats
 
-decrease_file_base = 'surgical_gradient_r2_decrease_final_'
-file_title = 'Units from Reduced Data'
+import argparse
+
+parser = argparse.ArgumentParser(description='Suprisal plot generator')
+parser.add_argument('--decrease_file_base', type=str,
+                    help='base name for decrease files')
+parser.add_argument('--decrease_file_unique_ids', nargs='+', help='<Required> Set flag', required=False)
+parser.add_argument('--surgical_decrease', type=bool, default=False,
+                    help='boolean determining if surgical decrease should be plotted')
+parser.add_argument('--file_title', type=str, default = '',
+                    help='Title to be used for plot title specification')
+parser.add_argument('--save_file', type=str, default = 'surprisal_plots',
+                    help='file to be used for plot saving')
+args = parser.parse_args()
 
 # IGNORE WARNINGS
 import sys
@@ -247,79 +258,81 @@ plt.plot([0,1,2,3,4,5],average_surprisals_whowas_unambiguous[1:],color=flatui[3]
 gold_surp_df = pd.DataFrame.from_dict(surprisal_data)
 ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',join=False,data=gold_surp_df,order=['Noun','Unreduced content','Verb','RC contents','Disambiguator','End'], legend=False,label='_nolegend_',dodge=True)
 weight_test = []
+
+
 ### START DECREASE ###
-#
-# surprisal_data = {'Time':[],'Avg Surprisal':[],'File idx':[]}
-# flatui = ["#EE5A24", "#009432", "#0652DD", "#9980FA"]
-# sns.set_palette(flatui)
-# weight_test = [0.1,1,10]
-# for hue,file_name_idx in enumerate(weight_test):
-#
-#     words = []
-#     surprisals = []
-#     # print('surgical_cell_verb_'+str(file_name_idx)+'.txt')
-#     with open(decrease_file_base+str(file_name_idx)+'.txt','r') as text_file:
-#         for line in text_file:
-#             word, surprisal = line.strip().split('\t')
-#             words.append(word)
-#             surprisals.append(float(surprisal))
-#
-#
-#     words_idx = -1
-#
-#     average_surprisals_ambiguous = [0]*len(ambiguous_cols)
-#     average_surprisals_whowas_ambiguous = [0]*len(whowas_ambiguous_cols)
-#     average_surprisals_unambiguous = [0]*len(unambiguous_cols)
-#     average_surprisals_whowas_unambiguous = [0]*len(whowas_unambiguous_cols)
-#
-#
-#     for ridx in range(len(data)):
-#         row = data.iloc[ridx]
-#
-#         for cidx, col in enumerate(ambiguous_cols):
-#             column_words = row[col].strip()
-#             words_in_column = len(column_words.split(' '))
-#
-#             new_words_idx = words_idx + words_in_column
-#
-#             surp = 0
-#             if col == 'End':
-#                 for idx in range(words_idx + 1, new_words_idx-1):
-#                     surp += surprisals[idx]
-#             else:
-#                 for idx in range(words_idx + 1, new_words_idx+1):
-#                     surp += surprisals[idx]
-#
-#             if col is not 'Start':
-#                 if 'verb' in col:
-#                     surprisal_data['Time'].append('Verb')
-#                 else:
-#                     surprisal_data['Time'].append(col)
-#                 surprisal_data['Avg Surprisal'].append(surp)
-#                 surprisal_data['File idx'].append(hue)
-#
-#             words_idx = new_words_idx
-#             average_surprisals_ambiguous[cidx] = (average_surprisals_ambiguous[cidx]*ridx + surp)/(ridx + 1)
-#
-#     plt.plot([0,2,3,4,5],average_surprisals_ambiguous[1:],linestyle='--',label='Ambiguous Reduced '+str(file_name_idx),color=flatui[hue])
-#
-# surp_df = pd.DataFrame.from_dict(surprisal_data)
-# ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',data=surp_df,order=['Noun','Unreduced content','Verb','RC contents','Disambiguator','End'],join=False, legend=False,label='_nolegend_',dodge=True)
-# ### END DECREASE ###
-# pos_locs = ['Noun','Verb','RC contents','Disambiguator','End']
-# print('\n\nSignificance Measures:')
-# for hue, surp_df_hue in surp_df.groupby('File idx'):
-#     print('\n\n')
-#     for pos in pos_locs:
-#
-#         surprisal_list = surp_df_hue[surp_df_hue['Time'] == pos]['Avg Surprisal'].tolist()
-#
-#         # if hue == 2 and pos == 'Disambiguator':
-#         #     import pdb; pdb.set_trace()
-#
-#         golden_surprisal_list = gold_surp_df[gold_surp_df['Time'] == pos] [gold_surp_df['File idx'] == 0]['Avg Surprisal'].tolist()
-#         print('Value : '+str(weight_test[hue])+' at Site : '+str(pos)+' -- p_value = ',stats.ttest_rel(golden_surprisal_list,surprisal_list).pvalue)
-#
+if args.surgical_decrease:
+    surprisal_data = {'Time':[],'Avg Surprisal':[],'File idx':[]}
+    flatui = ["#EE5A24", "#009432", "#0652DD", "#9980FA"]
+    sns.set_palette(flatui)
+    weight_test = args.decrease_file_unique_ids
+    for hue,file_name_idx in enumerate(weight_test):
+
+        words = []
+        surprisals = []
+        # print('surgical_cell_verb_'+str(file_name_idx)+'.txt')
+        with open(args.decrease_file_base+str(file_name_idx)+'.txt','r') as text_file:
+            for line in text_file:
+                word, surprisal = line.strip().split('\t')
+                words.append(word)
+                surprisals.append(float(surprisal))
+
+
+        words_idx = -1
+
+        average_surprisals_ambiguous = [0]*len(ambiguous_cols)
+        average_surprisals_whowas_ambiguous = [0]*len(whowas_ambiguous_cols)
+        average_surprisals_unambiguous = [0]*len(unambiguous_cols)
+        average_surprisals_whowas_unambiguous = [0]*len(whowas_unambiguous_cols)
+
+
+        for ridx in range(len(data)):
+            row = data.iloc[ridx]
+
+            for cidx, col in enumerate(ambiguous_cols):
+                column_words = row[col].strip()
+                words_in_column = len(column_words.split(' '))
+
+                new_words_idx = words_idx + words_in_column
+
+                surp = 0
+                if col == 'End':
+                    for idx in range(words_idx + 1, new_words_idx-1):
+                        surp += surprisals[idx]
+                else:
+                    for idx in range(words_idx + 1, new_words_idx+1):
+                        surp += surprisals[idx]
+
+                if col is not 'Start':
+                    if 'verb' in col:
+                        surprisal_data['Time'].append('Verb')
+                    else:
+                        surprisal_data['Time'].append(col)
+                    surprisal_data['Avg Surprisal'].append(surp)
+                    surprisal_data['File idx'].append(hue)
+
+                words_idx = new_words_idx
+                average_surprisals_ambiguous[cidx] = (average_surprisals_ambiguous[cidx]*ridx + surp)/(ridx + 1)
+
+        plt.plot([0,2,3,4,5],average_surprisals_ambiguous[1:],linestyle='--',label='Ambiguous Reduced '+str(file_name_idx),color=flatui[hue])
+
+    surp_df = pd.DataFrame.from_dict(surprisal_data)
+    ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',data=surp_df,order=['Noun','Unreduced content','Verb','RC contents','Disambiguator','End'],join=False, legend=False,label='_nolegend_',dodge=True)
+    ### END DECREASE ###
+    pos_locs = ['Noun','Verb','RC contents','Disambiguator','End']
+    print('\n\nSignificance Measures:')
+    for hue, surp_df_hue in surp_df.groupby('File idx'):
+        print('\n\n')
+        for pos in pos_locs:
+
+            surprisal_list = surp_df_hue[surp_df_hue['Time'] == pos]['Avg Surprisal'].tolist()
+
+            # if hue == 2 and pos == 'Disambiguator':
+            #     import pdb; pdb.set_trace()
+
+            golden_surprisal_list = gold_surp_df[gold_surp_df['Time'] == pos] [gold_surp_df['File idx'] == 0]['Avg Surprisal'].tolist()
+            print('Value : '+str(weight_test[hue])+' at Site : '+str(pos)+' -- p_value = ',stats.ttest_rel(golden_surprisal_list,surprisal_list).pvalue)
+
 
 
 
@@ -384,10 +397,12 @@ weight_test = []
 # ax = sns.pointplot(x='Time',y='Avg Surprisal', hue='File idx',data=surp_df,order=['Noun','Unreduced content','Verb','RC contents','Disambiguator','End'],join=False)
 # ### END INCREASE ###
 
-plt.title('Averaged VBD Surprisal Plots :: '+file_title)
+plt.title('Averaged VBD Surprisal Plots :: '+args.file_title)
 handles, labels = ax.get_legend_handles_labels()
 
 plt.legend(handles[0:4+len(weight_test)], labels[0:4+len(weight_test)])
 # plt.subplots_adjust(right=0.6)
+plt.tick_params( labelsize='small', labelrotation=45)
+
 plt.tight_layout()
-plt.savefig('surprisal_plots.png')
+plt.savefig(args.save_file+'.png')
