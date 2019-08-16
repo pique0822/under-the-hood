@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def main(args):
-    data = pd.read_csv(args.stimuli_file)
+    data = pd.read_csv(args.stimuli_file).fillna("")
 
     verbs = pd.DataFrame([])
     if args.extra_verbs is not None:
@@ -24,7 +24,10 @@ def main(args):
                 else:
                     sentence.append(row["Unambiguous verb"])
 
-                sentence.extend(row["RC contents"].split())
+                if row["RC contents"]:
+                    sentence.extend(row["RC contents"].split())
+                else:
+                    sentence.extend(row["RC by-phrase"].split())
                 # sentence.append(row.Intervener)
 
                 # Build data item with original verb.
