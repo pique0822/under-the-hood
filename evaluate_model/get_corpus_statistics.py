@@ -46,48 +46,34 @@ def check_counts():
 		json.dump(counts, f, indent=4)
 	print('saved')
 
-# def main(vocab, n, pos, outfile):
-# 	print('Loading dictionary from ' + vocab)
-# 	d = load_json(vocab)
-
-# 	print('Getting top %d words' % n)
-# 	top_words = top_n_words(d, n)
-
-# 	print('Getting POS tags')
-# 	tags = tag(top_words)
-
-# 	print('Writing tokens from {}'.format(pos))
-# 	tokens = ['{},{}'.format(t[0],t[1]) for t in tags if t[1] in pos]
-# 	tokens.insert(0, 'token,POS')
-
-# 	write_lines(outfile, tokens)
-
 def main(vocab, n, pos, outfile):
 	print('Loading dictionary from ' + vocab)
 	d = load_json(vocab)
-	words = d['word2idx'].keys()
+
+	print('Getting top %d words' % n)
+	top_words = top_n_words(d, n)
 
 	print('Getting POS tags')
-	tags = tag(words)
+	tags = tag(top_words)
 
-	print('Keeping tokens from {}'.format(pos))
-	# tags = [t for t in tags if t[1] in pos]
-	lines = ['{},{}'.format(t[0],t[1]) for t in tags]
-	lines.insert(0, 'token,POS')
+	print('Writing tokens from {}'.format(pos))
+	tokens = ['{},{}'.format(t[0],t[1]) for t in tags if t[1] in pos]
+	tokens.insert(0, 'token,POS')
 
-	write_lines(outfile, lines)
+	write_lines(outfile, tokens)
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Get top verbs.')
-	parser.add_argument('--vocab', '-vocab', type=str,
+	parser.add_argument('--vocab', '--vocab', type=str,
 						default='/om/user/jennhu/colorlessgreenRNNs/data/wiki/vocab_dict.json',
 	                    help='path to vocab dict')
-	parser.add_argument('--n', '-n', type=int, default=10000,
+	parser.add_argument('-n', '--n', type=int, default=10000,
 	                    help='number of top words in vocab to consider')
-	parser.add_argument('--pos', '-pos', nargs='+', default=['VBD', 'CC', 'IN', 'RB'],
+	parser.add_argument('--pos', '--pos', nargs='+', default=['VBD', 'CC', 'IN', 'RB'],
 						help='POS tags to include in output file')
-	parser.add_argument('--outfile', '-outfile', default='wiki.csv',
+	parser.add_argument('--outfile', '--outfile', default='wiki.csv',
 						help='file to write data')
 	args = parser.parse_args()
-	# main(**vars(args))
-	check_counts()
+	main(**vars(args))
+	# check_counts()

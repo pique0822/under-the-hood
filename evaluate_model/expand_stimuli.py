@@ -6,31 +6,44 @@ import pandas as pd
 
 def main(args):
     data = pd.read_csv(args.stimuli_file)
-    items = pd.read_csv(args.corpus_stats_file)
-    items = items[items.train_count >= args.frequency_threshold]
 
-    data_dict = {'sentence': [], 'ambiguous': [], 'reduced': [], 'post_rc_POS': []}
-    for r_idx in range(len(data)):
-        row = data.iloc[r_idx]
+    verbs = pd.DataFrame([])
+    if args.extra_verbs is not None:
+        verbs = pd.read_csv(args.corpus_stats_file)
 
+    expanded = []
+    for _, row in data.iterrows():
         for ambiguous in [True, False]:
             for reduced in [True, False]:
-                sentence = row['Start'] + ' ' + row['Noun'] + ' '
+                sentence = row.Start.split() + row.Noun.split()
                 if not reduced:
-                    sentence += row['Unreduced content'] + ' '
+                    sentence.extend(row["Unreduced content"].split())
+
                 if ambiguous:
-                    sentence += row['Ambiguous verb'] + ' '
+                    sentence.append(row["Ambiguous verb"])
                 else:
-                    sentence += row['Unambiguous verb'] + ' '
-                sentence += row['RC contents'] + ' ' # + row['Intervener'] + ' '
+                    sentence.append(row["Unambiguous verb"])
 
-                for r_item_idx in range(len(items)):
-                    item_row = items.iloc[r_item_idx]
-                    data_dict['sentence'].append(sentence + item_row['token'].lower() + ' <eos>')
-                    data_dict['ambiguous'].append(ambiguous)
-                    data_dict['reduced'].append(reduced)
-                    data_dict['post_rc_POS'].append(item_row['POS'])
+                sentence.extend(row["RC contents"].split())
+                # sentence.append(row.Intervener)
 
+                # Build data item with original verb.
+                expanded.append({
+                    "sentence": " ".join(sentence + [row.Disambiguator, "<eos>"]),
+                    "ambiguous": ambiguous,
+                    "reduced": reduced,
+                    "disambiguator_idx": len(sentence),
+                })
+
+                for _, verb_row in verbs.iterrows():
+                    expanded.append({
+                        "sentence": " ".join(sentence + [verb_row.token.lower(), "<eos>"]),
+                        "ambiguous": ambiguous,
+                        "reduced": reduced,
+                        "disambiguator_idx": len(sentence),
+                    })
+
+    df = pd.DataFrame.from_records(expanded)
     with args.out_file.open("w") as out_f:
         df.to_csv(out_f, index=False)
 
@@ -39,9 +52,8 @@ if __name__ == "__main__":
     p = ArgumentParser()
 
     p.add_argument("stimuli_file", type=Path)
-    p.add_argument("corpus_stats_file", type=Path)
     p.add_argument("out_file", type=Path)
-    p.add_argument("--frequency_threshold", default=100, type=int)
+    p.add_argument("--extra_verbs", type=Path)
 
     args = p.parse_args()
     main(args)
