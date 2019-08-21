@@ -1,3 +1,6 @@
+
+from collections import Counter
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -26,8 +29,12 @@ from tqdm import tqdm
 import argparse
 
 parser = argparse.ArgumentParser(description='Average Surprisal Decoder')
+parser.add_argument("stimuli_file", help="path to stimuli csv")
+parser.add_argument("surprisal_file", help="path to surprisals output for these stimuli")
 parser.add_argument('--model_path', type=str,
-            help='model location', default='/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt')
+            help='model location',
+            default='/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt')
+parser.add_argument("--data_path", help="path to model data")
 parser.add_argument('--seed', type=int, default=1111,
             help='random seed')
 parser.add_argument('--training_cells', type=str, default='reduced',
@@ -44,10 +51,9 @@ ROOT = Path(__file__).absolute().parent.parent
 
 load_files = False
 
-if not os.path.exists('best_coefs'):
-    os.makedirs('best_coefs')
-
 np.random.seed(args.seed)
+
+print(os.listdir("."))
 
 
 
@@ -59,202 +65,100 @@ print('=== MODEL INFORMATION ===')
 print(model)
 
 
-data_path = ROOT / "data" / "colorlessgreenRNNs"
-
-
 print('\n=== DEFINING CORPUS ===')
-corpus = data.Corpus(data_path)
+corpus = data.Corpus(args.data_path)
 ntokens = corpus.dictionary.__len__()
 
 
-df = pd.read_csv(ROOT / "garden_path" / "data" / "verb-ambiguity-with-intervening-phrase.csv")
+df = pd.read_csv(args.stimuli_file, index_col=0).sort_index()
+surp_df = pd.read_csv(args.surprisal_file, index_col=["sentence_id", "token_id"]).sort_index()
 
-surp_df = pd.read_csv(ROOT / "evaluate_model" / "surprisal_rc.csv")
 
+# collect average surprisal for a given prefix.
 total_surprisal = 0
-previous_prefix = None
-prefix_to_avg = {}
-count = 1
+prefix_counts = Counter()
+prefix_to_avg = Counter()
 
-for i in range(len(surp_df)):
-    split_sentence = surp_df.iloc[i]['sentence'].split(' ')
-    surprisal = float(surp_df.iloc[i]['surprisal'])
+for sentence_id, surprisals in surp_df.groupby("sentence_id"):
+    surprisals = surprisals.surprisal
+    sentence_row = df.iloc[sentence_id - 1]
 
-    prefix = ' '.join(split_sentence[:len(split_sentence)-2])
+    # get surprisal at disambiguator index.
+    disambiguator_token_idx = len(surprisals) - 2
+    surprisal = list(surprisals.surprisals)[disambiguator_token_idx]
 
-    if previous_prefix != prefix:
-        if previous_prefix is not None:
-            prefix_to_avg[previous_prefix] = total_surprisal/count
+    # we'll average this surprisal over the preceding prefix string content
+    prefix = " ".join(list(surprisals.token)[:disambiguator_token_idx])
 
-        total_surprisal = surprisal
-        count = 1
-    else:
-        total_surprisal += surprisal
-        count += 1
+    prefix_counts[prefix] += 1
+    prefix_to_avg[prefix] += surprisal
 
-    previous_prefix = prefix
-
-ambiguous_cols_prefix = ['Start','Noun','Ambiguous verb']
-whowas_ambiguous_cols_prefix = ['Start','Noun','Unreduced content','Ambiguous verb']
-unambiguous_cols_prefix = ['Start','Noun','Unambiguous verb']
-whowas_unambiguous_cols_prefix = ['Start','Noun','Unreduced content','Unambiguous verb']
-
-ambiguous_cols_full = ['Start','Noun','Ambiguous verb', 'RC contents']
-whowas_ambiguous_cols_full = ['Start','Noun','Unreduced content','Ambiguous verb', 'RC contents']
-unambiguous_cols_full = ['Start','Noun','Unambiguous verb', 'RC contents']
-whowas_unambiguous_cols_full = ['Start','Noun','Unreduced content','Unambiguous verb', 'RC contents']
+# run average
+prefix_to_avg = {prefix: total / prefix_counts[prefix]
+                 for prefix, total in prefix_to_avg.items()}
+print(prefix_to_avg)
 
 
+conditions = {
+    "ambiguous_reduced": {
+        "prefix_columns": ["Start", "Noun", "Ambiguous verb", "RC contents"],
+        "extract_column": "Ambiguous verb",
+    },
+    "ambiguous_unreduced": {
+        "prefix_columns": ["Start", "Noun", "Unreduced content", "Ambiguous verb", "RC contents"],
+        "extract_column": "Ambiguous verb",
+    },
+    "unambiguous_reduced": {
+        "prefix_columns": ["Start", "Noun", "Unambiguous verb", "RC contents"],
+        "extract_column": "Unambiguous verb",
+    },
+    "unambiguous_unreduced": {
+        "prefix_columns": ["Start", "Noun", "Unreduced content", "Unambiguous verb", "RC contents"],
+        "extract_column": "Unambiguous verb",
+    }
+}
 
-amb_cells = []
-ambiguous_targets = []
-
-
-unamb_cells = []
-unambiguous_targets = []
-
-
-unreamb_cells = []
-unreduced_ambiguous_targets = []
-
-unreunamb_cells = []
-unreduced_unambiguous_targets = []
-
-def surprisal_score(verb_surp,period_surp):
-    return verb_surp-period_surp
+results = []
 
 print('=== TESTING MODEL ===')
-for df_idx in tqdm(list(range(len(df)))):
-    print('')
-    row = df.iloc[df_idx]
-
+# Reconstruct the sentences from the original stimuli data now.
+# For each condition, retrieve the relevant model state + surprisal.
+for idx, row in tqdm(list(df.iterrows())):
     main_verb = row['Disambiguator'].strip().lstrip()
     if main_verb in corpus.dictionary.word2idx:
         main_verb_idx = corpus.dictionary.word2idx[main_verb]
     else:
         main_verb_idx = corpus.dictionary.word2idx["<unk>"]
 
-    full_stop_idx = corpus.dictionary.word2idx['.']
+    for condition, metadata in conditions.items():
+        # prepare sentence prefix string for lookup
+        prefix = " ".join(row[col].strip() for col in metadata["columns"])
 
-    ambiguous_prefix = ""
-    for column in ambiguous_cols_prefix:
-        ambiguous_prefix += ' '+row[column]
-        ambiguous_prefix = ambiguous_prefix.lstrip().strip()
-        whowas_ambiguous_prefix = ""
-    for column in whowas_ambiguous_cols_prefix:
-        whowas_ambiguous_prefix += ' '+row[column]
-        whowas_ambiguous_prefix = whowas_ambiguous_prefix.lstrip().strip()
+        # from what token idx should we extract a cell state ?
+        # NB coupled with tokenization method
+        extract_column_idx = metadata["columns"].index(metadata["extract_column"])
+        # get the last token of the region of interest
+        extract_token_idx = (sum(len(row[col].split(" "))
+                                 for col in metadata["columns"][:extract_column_idx]) - 1)
 
-    unambiguous_prefix = ""
-    for column in unambiguous_cols_prefix:
-        unambiguous_prefix += ' '+row[column]
-        unambiguous_prefix = unambiguous_prefix.lstrip().strip()
+        # model emb idx lookup; remove the auto-appended <eos> token
+        prefix_tokenized = corpus.safe_tokenize_sentence(prefix)[:-1]
 
-    whowas_unambiguous_prefix = ""
-    for column in whowas_unambiguous_cols_prefix:
-        whowas_unambiguous_prefix += ' '+row[column]
-        whowas_unambiguous_prefix = whowas_unambiguous_prefix.lstrip().strip()
+        # extract model state
+        hidden = model.init_hidden(1)
+        for token in prefix_tokenized:
+            input_val = torch.randint(ntokens, (1, 1,), dtype=torch.long)
+            input_val.fill_(token.item())
+            output, hidden = model(input, hidden)
 
+        last_cell = hidden[1][1].detach().numpy()
 
+        surprisal = prefix_to_avg[prefix]
 
+        results.append((idx, condition, last_cell, surprisal))
 
-    ambiguous_full = ""
-    for column in ambiguous_cols_full:
-        ambiguous_full += ' '+row[column]
-        ambiguous_full = ambiguous_full.lstrip().strip()
+# TODO stopped refactor here
 
-    whowas_ambiguous_full = ""
-    for column in whowas_ambiguous_cols_full:
-        whowas_ambiguous_full += ' '+row[column]
-        whowas_ambiguous_full = whowas_ambiguous_full.lstrip().strip()
-
-    unambiguous_full = ""
-    for column in unambiguous_cols_full:
-        unambiguous_full += ' '+row[column]
-        unambiguous_full = unambiguous_full.lstrip().strip()
-
-    whowas_unambiguous_full = ""
-    for column in whowas_unambiguous_cols_full:
-        whowas_unambiguous_full += ' '+row[column]
-        whowas_unambiguous_full = whowas_unambiguous_full.lstrip().strip()
-
-
-
-    tokenized_amb = corpus.safe_tokenize_sentence(ambiguous_prefix.strip())
-
-    hidden = model.init_hidden(1)
-
-    for token in tokenized_amb:
-        input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-        input.fill_(token.item())
-        output, hidden = model(input,hidden)
-
-    last_cell = hidden[1][1].detach().numpy()
-
-    amb_cells.append(last_cell)
-
-
-    ambiguous_surprisal = prefix_to_avg[ambiguous_full]
-    ambiguous_targets.append(ambiguous_surprisal)
-
-
-
-
-    hidden = model.init_hidden(1)
-
-    tokenized_unamb = corpus.safe_tokenize_sentence(unambiguous_prefix.strip())
-
-    for token in tokenized_unamb:
-        input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-        input.fill_(token.item())
-        output, hidden = model(input,hidden)
-
-    last_cell = hidden[1][1].detach().numpy()
-
-    unamb_cells.append(last_cell)
-
-    unambiguous_surprisal = prefix_to_avg[unambiguous_full]
-    unambiguous_targets.append(unambiguous_surprisal)
-
-
-
-    hidden = model.init_hidden(1)
-
-    tokenized_unreamb = corpus.safe_tokenize_sentence(whowas_ambiguous_prefix.strip())
-
-    for token in tokenized_unreamb:
-        input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-        input.fill_(token.item())
-        output, hidden = model(input,hidden)
-    last_cell = hidden[1][1].detach().numpy()
-
-    unreamb_cells.append(last_cell)
-
-
-    whowas_ambiguous_surprisal = prefix_to_avg[whowas_ambiguous_full]
-    unreduced_ambiguous_targets.append(whowas_ambiguous_surprisal)
-
-
-
-    hidden = model.init_hidden(1)
-
-    tokenized_unreunamb = corpus.safe_tokenize_sentence(whowas_unambiguous_prefix.strip())
-
-    for token in tokenized_unreunamb:
-        input = torch.randint(ntokens, (1, 1), dtype=torch.long)
-        input.fill_(token.item())
-        output, hidden = model(input,hidden)
-    last_cell = hidden[1][1].detach().numpy()
-
-    if whowas_unambiguous_full in prefix_to_avg:
-        unreunamb_cells.append(last_cell)
-
-
-        whowas_unambiguous_surprisal = prefix_to_avg[whowas_unambiguous_full]
-        unreduced_unambiguous_targets.append(whowas_unambiguous_surprisal)
-
-    # print(ambiguous_full)
-    # break
 unamb_cells = np.array(unamb_cells).reshape(len(unamb_cells),-1)
 amb_cells = np.array(amb_cells).reshape(len(amb_cells),-1)
 unreamb_cells = np.array(unreamb_cells).reshape(len(unreamb_cells),-1)
@@ -415,9 +319,9 @@ else:
 # for c in significant_coef_indices:
 #     print(c,best_R2_reg.coef_[c])
 
-pickle.dump(best_R2_reg,open('best_coefs/best_r2_coefs_'+args.file_identifier+'.pkl','wb+'))
-pickle.dump(best_mse_reg,open('best_coefs/best_mse_coefs_'+args.file_identifier+'.pkl','wb+'))
-pickle.dump(significant_coef_indices,open('best_coefs/significant_coefs_'+args.file_identifier+'.pkl','wb+'))
+pickle.dump(best_R2_reg,open('best_r2_coefs_'+args.file_identifier+'.pkl','wb+'))
+pickle.dump(best_mse_reg,open('best_mse_coefs_'+args.file_identifier+'.pkl','wb+'))
+pickle.dump(significant_coef_indices,open('significant_coefs_'+args.file_identifier+'.pkl','wb+'))
 
 print('Ambiguous R^2 Score',best_R2_reg.score(amb_cells, ambiguous_targets))
 print('Unambiguous R^2 Score',best_R2_reg.score(unamb_cells, unambiguous_targets))
