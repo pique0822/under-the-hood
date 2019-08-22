@@ -44,3 +44,9 @@ experiment:
             - unambiguous_reduced
             - unambiguous_unreduced
         cross_validation_folds: 10
+
+    surgery:
+        coefficients:
+            - 0.1
+            - 1
+            - 10

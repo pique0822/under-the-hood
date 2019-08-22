@@ -1,21 +1,22 @@
 #!/usr/bin/env nextflow
 
+import org.yaml.snakeyaml.Yaml
+
 // baseDir as prepared by nextflow references a particular FS share. not good.
 omBaseDir = "/om2/user/jgauthie/under-the-hood"
 
 params.experiment_file = "${omBaseDir}/garden_path/experiment.yml"
-params.stimuli_file = "${omBaseDir}/garden_path/data/verb-ambiguity-with-intervening-phrase.csv"
-// TODO auto generate prefixes file :/
-// longer-term : just remove this required input
-params.prefixes_file = "${omBaseDir}/evaluate_model/prefixes.txt"
+
+def Map experiment_yaml = new Yaml().load((params.experiment_file as File).text)["experiment"] as Map
+
+stimuli_file = new File((params.experiment_file as File).getParentFile(), experiment_yaml["stimuli"])
 
 params.model_dir = "/om/group/cpl/language-models/colorlessgreenRNNs"
 params.model_checkpoint_path = "${params.model_dir}/hidden650_batch128_dropout0.2_lr20.0.pt"
 // params.model_data_path = "${params.model_dir}/data"
 params.model_data_path = "${omBaseDir}/data/colorlessgreenRNNs"
 
-params.surgery_coefs = "0.1,1,10"
-surgery_coefs = Channel.from(params.surgery_coefs.tokenize(","))
+surgery_coefs = Channel.from(experiment_yaml["surgery"]["coefficients"])
 
 //////////
 
@@ -42,7 +43,7 @@ process getSurprisals {
     label "om_deepo"
 
     input:
-    file(stimuli_csv) from Channel.from(params.stimuli_file)
+    file(stimuli_csv) from Channel.from(stimuli_file)
     file(prefixes_file) from prefixes_ch
 
     output:
@@ -67,7 +68,7 @@ process learnBaseDecoder {
     file(surprisals_file) from surprisals_ch
 
     output:
-    file("*.pkl") into base_decoder_ch
+    set file("best_mse_coefs_decoder.pkl"), file("best_r2_coefs_decoder.pkl"), file("significant_coefs_decoder.pkl") into base_decoder_ch
 
     script:
     """
@@ -81,20 +82,21 @@ python3 ${omBaseDir}/garden_path/avg_suprisal_vbd_decoder.py \
     """
 }
 
+
 process doSurgery {
     label "om_deepo"
 
     input:
-    set val(surgery_coef), file(decoder_files) from surgery_coefs.combine(base_decoder_ch)
+    set val(surgery_coef), file("best_mse_coefs_decoder.pkl"), file("best_r2_coefs_decoder.pkl"), file("significant_coefs_decoder.pkl") from surgery_coefs.combine(base_decoder_ch)
     file(prefixes_file) from prefixes_ch
 
     """
 #!/usr/bin/env bash
-python3 ${omBaseDir}/garden_path/evaluate_target_word_test_lower_surprisal.py \
+python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test_lower_surprisal.py \
     --data ${params.model_data_path} \
     --checkpoint ${params.model_checkpoint_path} \
     --prefixfile ${prefixes_file} \
-    --surprisal_mode True \
+    --surprisalmode True \
     --outf surgical_gradient_r2_decrease_${file_prefix}_${surgery_coef}.txt \
     --modify_cell True \
     --surgical_difference ${surgery_coef} \

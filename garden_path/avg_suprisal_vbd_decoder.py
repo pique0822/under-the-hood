@@ -28,6 +28,9 @@ import yaml
 from tqdm import tqdm
 
 import argparse
+import logging
+
+logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser(description='Average Surprisal Decoder')
 parser.add_argument("experiment_file", help="path to stimuli csv")
@@ -78,8 +81,6 @@ prefix_counts = Counter()
 prefix_to_avg = Counter()
 
 for sentence_id, surprisals in surp_df.groupby("sentence_id"):
-    sentence_row = df.iloc[sentence_id - 1]
-
     # get surprisal at disambiguator index.
     disambiguator_token_idx = len(surprisals) - 2
     surprisal = list(surprisals.surprisal)[disambiguator_token_idx]
@@ -93,27 +94,9 @@ for sentence_id, surprisals in surp_df.groupby("sentence_id"):
 # run average
 prefix_to_avg = {prefix: total / prefix_counts[prefix]
                  for prefix, total in prefix_to_avg.items()}
+from pprint import pprint
 print(prefix_to_avg)
 
-
-conditions = {
-    "ambiguous_reduced": {
-        "prefix_columns": ["Start", "Noun", "Ambiguous verb", "RC contents"],
-        "extract_column": "Ambiguous verb",
-    },
-    "ambiguous_unreduced": {
-        "prefix_columns": ["Start", "Noun", "Unreduced content", "Ambiguous verb", "RC contents"],
-        "extract_column": "Ambiguous verb",
-    },
-    "unambiguous_reduced": {
-        "prefix_columns": ["Start", "Noun", "Unambiguous verb", "RC contents"],
-        "extract_column": "Unambiguous verb",
-    },
-    "unambiguous_unreduced": {
-        "prefix_columns": ["Start", "Noun", "Unreduced content", "Unambiguous verb", "RC contents"],
-        "extract_column": "Unambiguous verb",
-    }
-}
 
 results_by_condition = defaultdict(list)
 
@@ -127,9 +110,15 @@ for idx, row in tqdm(list(df.iterrows())):
     else:
         main_verb_idx = corpus.dictionary.word2idx["<unk>"]
 
-    for condition, metadata in conditions.items():
+    for condition, metadata in experiment["conditions"].items():
         # prepare sentence prefix string for lookup
         prefix = " ".join(row[col].strip() for col in metadata["prefix_columns"])
+
+        try:
+            surprisal = prefix_to_avg[prefix]
+        except KeyError:
+            logger.warn("Missing surprisal estimate for prefix: %s", prefix)
+            continue
 
         # from what token idx should we extract a cell state ?
         # NB coupled with tokenization method
@@ -148,9 +137,7 @@ for idx, row in tqdm(list(df.iterrows())):
             input_val.fill_(token.item())
             output, hidden = model(input_val, hidden)
 
-        last_cell = hidden[1][1].detach().numpy()
-
-        surprisal = prefix_to_avg[prefix]
+        last_cell = hidden[1][1].detach().numpy().flatten()
 
         results_by_condition[condition].append((idx, last_cell, surprisal))
 
@@ -314,7 +301,6 @@ pickle.dump(best_R2_reg,open('best_r2_coefs_'+args.file_identifier+'.pkl','wb+')
 pickle.dump(best_mse_reg,open('best_mse_coefs_'+args.file_identifier+'.pkl','wb+'))
 pickle.dump(significant_coef_indices,open('significant_coefs_'+args.file_identifier+'.pkl','wb+'))
 
-print('Ambiguous R^2 Score',best_R2_reg.score(amb_cells, ambiguous_targets))
-print('Unambiguous R^2 Score',best_R2_reg.score(unamb_cells, unambiguous_targets))
-print('Unreduced Ambiguous R^2 Score',best_R2_reg.score(unreamb_cells, unreduced_ambiguous_targets))
-print('Unreduced Unambiguous R^2 Score',best_R2_reg.score(unreunamb_cells, unreduced_unambiguous_targets))
+for condition in experiment["conditions"]:
+    X_test, y_test = cells[condition], targets[condition]
+    print("R^2 score for condition %s: %f" % (condition, best_R2_reg.score(X_test, y_test)))
