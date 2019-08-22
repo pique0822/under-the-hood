@@ -1,5 +1,5 @@
 
-from collections import Counter
+from collections import Counter, defaultdict
 
 import torch
 from torch import nn
@@ -24,12 +24,13 @@ import utils
 import sklearn.metrics as skm
 
 import pickle
+import yaml
 from tqdm import tqdm
 
 import argparse
 
 parser = argparse.ArgumentParser(description='Average Surprisal Decoder')
-parser.add_argument("stimuli_file", help="path to stimuli csv")
+parser.add_argument("experiment_file", help="path to stimuli csv")
 parser.add_argument("surprisal_file", help="path to surprisals output for these stimuli")
 parser.add_argument('--model_path', type=str,
             help='model location',
@@ -37,9 +38,6 @@ parser.add_argument('--model_path', type=str,
 parser.add_argument("--data_path", help="path to model data")
 parser.add_argument('--seed', type=int, default=1111,
             help='random seed')
-parser.add_argument('--training_cells', type=str, default='reduced',
-                    help='select the cells that will be used to train the model {reduced | all}')
-parser.add_argument('--cross_validation',type=int,default=10,help='Amount of cross validation folds')
 parser.add_argument('--file_identifier', type=str, default='TEST',
                     help='unique identifier for the files generated in this method [DO NOT USE SPACES]')
 parser.add_argument('--smoothed_significance', type=bool, default=False,
@@ -52,9 +50,6 @@ ROOT = Path(__file__).absolute().parent.parent
 load_files = False
 
 np.random.seed(args.seed)
-
-print(os.listdir("."))
-
 
 
 # Load the pretrained model
@@ -70,8 +65,11 @@ corpus = data.Corpus(args.data_path)
 ntokens = corpus.dictionary.__len__()
 
 
-df = pd.read_csv(args.stimuli_file, index_col=0).sort_index()
-surp_df = pd.read_csv(args.surprisal_file, index_col=["sentence_id", "token_id"]).sort_index()
+with open(args.experiment_file, "r") as exp_f:
+    experiment = yaml.load(exp_f)["experiment"]
+stimuli_path = Path(args.experiment_file).parent / experiment["stimuli"]
+df = pd.read_csv(stimuli_path, header=0, index_col=0).sort_index()
+surp_df = pd.read_csv(args.surprisal_file, header=0, index_col=["sentence_id", "token_id"], sep="\t").sort_index()
 
 
 # collect average surprisal for a given prefix.
@@ -80,12 +78,11 @@ prefix_counts = Counter()
 prefix_to_avg = Counter()
 
 for sentence_id, surprisals in surp_df.groupby("sentence_id"):
-    surprisals = surprisals.surprisal
     sentence_row = df.iloc[sentence_id - 1]
 
     # get surprisal at disambiguator index.
     disambiguator_token_idx = len(surprisals) - 2
-    surprisal = list(surprisals.surprisals)[disambiguator_token_idx]
+    surprisal = list(surprisals.surprisal)[disambiguator_token_idx]
 
     # we'll average this surprisal over the preceding prefix string content
     prefix = " ".join(list(surprisals.token)[:disambiguator_token_idx])
@@ -118,7 +115,7 @@ conditions = {
     }
 }
 
-results = []
+results_by_condition = defaultdict(list)
 
 print('=== TESTING MODEL ===')
 # Reconstruct the sentences from the original stimuli data now.
@@ -132,14 +129,14 @@ for idx, row in tqdm(list(df.iterrows())):
 
     for condition, metadata in conditions.items():
         # prepare sentence prefix string for lookup
-        prefix = " ".join(row[col].strip() for col in metadata["columns"])
+        prefix = " ".join(row[col].strip() for col in metadata["prefix_columns"])
 
         # from what token idx should we extract a cell state ?
         # NB coupled with tokenization method
-        extract_column_idx = metadata["columns"].index(metadata["extract_column"])
+        extract_column_idx = metadata["prefix_columns"].index(metadata["extract_column"])
         # get the last token of the region of interest
         extract_token_idx = (sum(len(row[col].split(" "))
-                                 for col in metadata["columns"][:extract_column_idx]) - 1)
+                                 for col in metadata["prefix_columns"][:extract_column_idx]) - 1)
 
         # model emb idx lookup; remove the auto-appended <eos> token
         prefix_tokenized = corpus.safe_tokenize_sentence(prefix)[:-1]
@@ -149,42 +146,36 @@ for idx, row in tqdm(list(df.iterrows())):
         for token in prefix_tokenized:
             input_val = torch.randint(ntokens, (1, 1,), dtype=torch.long)
             input_val.fill_(token.item())
-            output, hidden = model(input, hidden)
+            output, hidden = model(input_val, hidden)
 
         last_cell = hidden[1][1].detach().numpy()
 
         surprisal = prefix_to_avg[prefix]
 
-        results.append((idx, condition, last_cell, surprisal))
+        results_by_condition[condition].append((idx, last_cell, surprisal))
 
-# TODO stopped refactor here
 
-unamb_cells = np.array(unamb_cells).reshape(len(unamb_cells),-1)
-amb_cells = np.array(amb_cells).reshape(len(amb_cells),-1)
-unreamb_cells = np.array(unreamb_cells).reshape(len(unreamb_cells),-1)
-unreunamb_cells = np.array(unreunamb_cells).reshape(len(unreunamb_cells),-1)
+cells = {condition: np.array([cell for _, cell, _ in items])
+         for condition, items in results_by_condition.items()}
+targets = {condition: np.array([surprisal for _, _, surprisal in items])
+           for condition, items in results_by_condition.items()}
 
-if args.training_cells == 'reduced':
-    all_cells = np.concatenate((amb_cells,unamb_cells))
+# items from which conditions should be used to train the decoder?
+train_conditions = experiment["decoder"]["train_conditions"]
 
-    all_targets = np.concatenate((ambiguous_targets,unambiguous_targets))
-elif args.training_cells =='all':
-    all_cells = np.concatenate((amb_cells,unamb_cells))
-    all_cells = np.concatenate((all_cells,unreamb_cells))
-    all_cells = np.concatenate((all_cells,unreunamb_cells))
-
-    all_targets = np.concatenate((ambiguous_targets,unambiguous_targets))
-    all_targets = np.concatenate((all_targets,unreduced_ambiguous_targets))
-    all_targets = np.concatenate((all_targets,unreduced_unambiguous_targets))
+X = np.concatenate([cells[cond] for cond in train_conditions])
+y = np.concatenate([targets[cond] for cond in train_conditions])
+n = len(X)
 
 
 coef_count = {}
 
-shuffled_indices = np.arange(len(all_cells))
+shuffled_indices = np.arange(len(X))
 np.random.shuffle(shuffled_indices)
 
-print('=== '+str(args.cross_validation)+' Experiment Significant ===')
-print('Training on '+str(int((args.cross_validation - 1)/args.cross_validation*len(all_cells))) + ' cell states of '+str(len(all_cells)))
+cv_folds = experiment["decoder"]["cross_validation_folds"]
+print('=== '+str(cv_folds)+' Experiment Significant ===')
+print('Training on %i cell states of %i' % (int((cv_folds - 1)/cv_folds*n), n))
 
 num_runs = 0
 all_coefs = None
@@ -208,15 +199,15 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
     mean_MSE = 0
     mean_R2 = 0
 
-    for exper_idx in tqdm(list(range(args.cross_validation)), desc="Experiment"):
+    for exper_idx in tqdm(list(range(cv_folds)), desc="Experiment"):
         # import pdb; pdb.set_trace()
-        training_indices = np.concatenate((shuffled_indices[0:int((exper_idx/args.cross_validation)*len(all_cells))],shuffled_indices[int(((exper_idx+1)/args.cross_validation)*len(all_cells)):]))
+        training_indices = np.concatenate((shuffled_indices[0:int((exper_idx/cv_folds)*n)],shuffled_indices[int(((exper_idx+1)/cv_folds)*n):]))
 
-        test_indices = shuffled_indices[int((exper_idx/args.cross_validation)*len(all_cells)):int(((exper_idx+1)/args.cross_validation)*len(all_cells))]
+        test_indices = shuffled_indices[int((exper_idx/cv_folds)*n):int(((exper_idx+1)/cv_folds)*n)]
 
         num_runs += 1
 
-        reg = sk.Ridge(alpha=alpha_value).fit(all_cells[training_indices],all_targets[training_indices])
+        reg = sk.Ridge(alpha=alpha_value).fit(X[training_indices], y[training_indices])
 
         if all_coefs is None:
             all_coefs = reg.coef_.copy()
@@ -232,16 +223,16 @@ for alpha_value in [0.01,0.1,0.2,0.5,1,5,10]:
             else:
                 coef_count[coef_idx] = 1
 
-        predicted_surp = reg.predict(all_cells[test_indices])
+        predicted_surp = reg.predict(X[test_indices])
 
         # print('EXP '+str(exper_idx)+':: Held Out R^2 Score',skm.r2_score(all_targets[test_indices],predicted_surp))
 
-        r2 =skm.r2_score(all_targets[test_indices],predicted_surp)
+        r2 =skm.r2_score(y[test_indices],predicted_surp)
 
         mean_R2 = (mean_R2*exper_idx + r2)/(exper_idx+1)
 
         # print('EXP '+str(exper_idx)+':: Held Out MSE Score',skm.mean_squared_error(all_targets[test_indices],predicted_surp))
-        mse = skm.mean_squared_error(all_targets[test_indices],predicted_surp)
+        mse = skm.mean_squared_error(y[test_indices],predicted_surp)
 
         mean_MSE = (mean_MSE*exper_idx + mse)/(exper_idx + 1)
 

@@ -1,0 +1,46 @@
+experiment:
+    name: "MV/RC garden pathing"
+    stimuli: data/verb-ambiguity-with-intervening-phrase.csv
+    conditions:
+        ambiguous_reduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Ambiguous verb
+                - RC contents
+            extract_column: Ambiguous verb
+            measure_column: Disambiguator
+        ambiguous_unreduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unreduced content
+                - Ambiguous verb
+                - RC contents
+            extract_column: Ambiguous verb
+            measure_column: Disambiguator
+        unambiguous_reduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unambiguous verb
+                - RC contents
+            extract_column: Unambiguous verb
+            measure_column: Disambiguator
+        unambiguous_unreduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unreduced content
+                - Unambiguous verb
+                - RC contents
+            extract_column: Unambiguous verb
+            measure_column: Disambiguator
+
+    decoder:
+        train_conditions:
+            - ambiguous_reduced
+            - ambiguous_unreduced
+            - unambiguous_reduced
+            - unambiguous_unreduced
+        cross_validation_folds: 10

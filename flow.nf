@@ -3,6 +3,7 @@
 // baseDir as prepared by nextflow references a particular FS share. not good.
 omBaseDir = "/om2/user/jgauthie/under-the-hood"
 
+params.experiment_file = "${omBaseDir}/garden_path/experiment.yml"
 params.stimuli_file = "${omBaseDir}/garden_path/data/verb-ambiguity-with-intervening-phrase.csv"
 // TODO auto generate prefixes file :/
 // longer-term : just remove this required input
@@ -24,11 +25,27 @@ surgery_coefs = Channel.from(params.surgery_coefs.tokenize(","))
 file_prefix = "decoder"
 
 
+// Given an experiment spec, generate prefixes for LM evaluation.
+process generatePrefixes {
+    output:
+    file "prefixes.txt" into prefixes_ch
+
+    script:
+    """
+#!/usr/bin/env bash
+python3 ${omBaseDir}/evaluate_model/generate_prefixes.py \
+    ${params.experiment_file} \
+    --outf prefixes.txt
+    """
+}
+
+
 process getSurprisals {
     label "om_deepo"
 
     input:
     file(stimuli_csv) from Channel.from(params.stimuli_file)
+    file(prefixes_file) from prefixes_ch
 
     output:
     file "surprisals.txt" into surprisals_ch
@@ -39,7 +56,7 @@ process getSurprisals {
 python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     --data ${params.model_data_path} \
     --checkpoint ${params.model_checkpoint_path} \
-    --prefixfile ${omBaseDir}/evaluate_model/prefixes.txt \
+    --prefixfile ${prefixes_file} \
     --surprisalmode True \
     --outf surprisals.txt
     """
@@ -58,7 +75,7 @@ process learnBaseDecoder {
     """
 #!/usr/bin/env bash
 python3 ${omBaseDir}/garden_path/avg_suprisal_vbd_decoder.py \
-    ${params.stimuli_file} \
+    ${params.experiment_file} \
     ${surprisals_file} \
     --model_path ${params.model_checkpoint_path} \
     --data_path ${params.model_data_path} \
