@@ -14,8 +14,6 @@ params.model_checkpoint_path = "${params.model_dir}/hidden650_batch128_dropout0.
 // params.model_data_path = "${params.model_dir}/data"
 params.model_data_path = "${omBaseDir}/data/colorlessgreenRNNs"
 
-params.decoder_cv_folds = 10
-
 params.surgery_coefs = "0.1,1,10"
 surgery_coefs = Channel.from(params.surgery_coefs.tokenize(","))
 
@@ -79,8 +77,6 @@ python3 ${omBaseDir}/garden_path/avg_suprisal_vbd_decoder.py \
     ${surprisals_file} \
     --model_path ${params.model_checkpoint_path} \
     --data_path ${params.model_data_path} \
-    --training_cells reduced \
-    --cross_validation ${params.decoder_cv_folds} \
     --file_identifier ${file_prefix}
     """
 }
@@ -90,9 +86,19 @@ process doSurgery {
 
     input:
     set val(surgery_coef), file(decoder_files) from surgery_coefs.combine(base_decoder_ch)
+    file(prefixes_file) from prefixes_ch
 
     """
 #!/usr/bin/env bash
-echo hello
+python3 ${omBaseDir}/garden_path/evaluate_target_word_test_lower_surprisal.py \
+    --data ${params.model_data_path} \
+    --checkpoint ${params.model_checkpoint_path} \
+    --prefixfile ${prefixes_file} \
+    --surprisal_mode True \
+    --outf surgical_gradient_r2_decrease_${file_prefix}_${surgery_coef}.txt \
+    --modify_cell True \
+    --surgical_difference ${surgery_coef} \
+    --file_identifier ${file_prefix} \
+    --gradient_type weight
     """
 }
