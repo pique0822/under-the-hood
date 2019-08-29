@@ -3,7 +3,7 @@
 import org.yaml.snakeyaml.Yaml
 
 // baseDir as prepared by nextflow references a particular FS share. not good.
-omBaseDir = "/om2/user/jgauthie/under-the-hood"
+omBaseDir = "/om/user/jgauthie/under-the-hood"
 
 params.experiment_file = "${omBaseDir}/garden_path/experiment.yml"
 
