@@ -26,15 +26,18 @@ file_prefix = "decoder"
 
 // Given an experiment spec, generate prefixes for LM evaluation.
 process generatePrefixes {
+    label "local"
+
     output:
-    file "prefixes.txt" into prefixes_ch
+    set file("prefixes.txt"), file("extract_idxs.txt") into prefixes_ch
 
     script:
     """
 #!/usr/bin/env bash
 python3 ${omBaseDir}/evaluate_model/generate_prefixes.py \
     ${params.experiment_file} \
-    --outf prefixes.txt
+    --outf prefixes.txt \
+    --extract_idx_outf extract_idxs.txt
     """
 }
 
@@ -43,8 +46,7 @@ process getSurprisals {
     label "om_deepo"
 
     input:
-    file(stimuli_csv) from Channel.from(stimuli_file)
-    file(prefixes_file) from prefixes_ch
+    set file(prefixes_file), file(extract_idxs_file) from prefixes_ch
 
     output:
     file "surprisals.txt" into surprisals_ch
@@ -87,20 +89,46 @@ process doSurgery {
     label "om_deepo"
 
     input:
-    set val(surgery_coef), file("best_mse_coefs_decoder.pkl"), file("best_r2_coefs_decoder.pkl"), file("significant_coefs_decoder.pkl") from surgery_coefs.combine(base_decoder_ch)
-    file(prefixes_file) from prefixes_ch
+    set val(surgery_coef), \
+        file("best_mse_coefs_decoder.pkl"), file("best_r2_coefs_decoder.pkl"), file("significant_coefs_decoder.pkl"), \
+        file(prefixes_file), file(extract_idxs_file) \
+        from surgery_coefs.combine(base_decoder_ch).combine(prefixes_ch)
+
+    output:
+    file("surgery_out.pkl") into surgery_ch
 
     """
 #!/usr/bin/env bash
-python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test_lower_surprisal.py \
+python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     --data ${params.model_data_path} \
     --checkpoint ${params.model_checkpoint_path} \
     --prefixfile ${prefixes_file} \
     --surprisalmode True \
-    --outf surgical_gradient_r2_decrease_${file_prefix}_${surgery_coef}.txt \
-    --modify_cell True \
+    --do_surgery True \
+    --surgery_idx_file ${extract_idxs_file} \
+    --surgery_coef_file best_r2_coefs_decoder.pkl \
     --surgical_difference ${surgery_coef} \
+    --surgery_outf surgery_out.pkl \
     --file_identifier ${file_prefix} \
     --gradient_type weight
+    """
+}
+
+
+process renderPlots {
+    label "local"
+
+    input:
+    file("*.pkl") from surgery_ch.collect()
+
+    output:
+    file "*.png"
+
+    script:
+    """
+#!/usr/bin/env bash
+python3 ${omBaseDir}/evaluate_model/generate_surprisal_plots_vbd.py \
+    --surgery_files *.pkl \
+    --surgical_decrease True
     """
 }
