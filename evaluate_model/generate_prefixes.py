@@ -8,7 +8,6 @@ import yaml
 def main(args):
     experiment = yaml.load(args.experiment_file)["experiment"]
     stimuli_path = Path(args.experiment_file.name).parent / experiment["stimuli"]
-    print(stimuli_path)
 
     stimuli = pd.read_csv(stimuli_path)
     for _, row in stimuli.iterrows():
