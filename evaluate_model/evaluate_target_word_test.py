@@ -36,7 +36,7 @@ parser.add_argument('--sentences', type=int, default='-1',
                     help='number of sentences to generate from prefix')
 parser.add_argument('--temperature', type=float, default=1.0,
                     help='temperature - higher will increase diversity')
-parser.add_argument('--outf', type=argparse.FileType("w"), default='generated.txt',
+parser.add_argument('--outf', type=argparse.FileType("w"), default=None,
                     help='output file for generated text')
 parser.add_argument('--prefixfile', type=str, default='-',
                     help='File with sentence prefix from which to generate continuations')
@@ -48,6 +48,7 @@ parser.add_argument("--surgery_idx_file", type=Path)
 parser.add_argument("--surgery_coef_file", type=Path)
 parser.add_argument("--gradient_type", choices=["loss", "weight"], default="weight")
 parser.add_argument("--surgery_scale", type=float, default=1.0)
+parser.add_argument("--surgery_outf", type=Path)
 
 
 args = parser.parse_args()
@@ -149,38 +150,45 @@ if args.surprisalmode:
 
     ntokens = dictionary.__len__()
     device = torch.device("cuda" if args.cuda else "cpu")
-    with args.outf as outf:
-        # write header.
-        outf.write("sentence_id\ttoken_id\ttoken\tsurprisal\n")
 
-        for i, sentence in enumerate(sentences):
-            # Prepare for surgery.
-            surgery_idx = surgery_idxs[i] if args.do_surgery else None
+    results = []
 
-            torch.manual_seed(args.seed)
-            hidden = model.init_hidden(1)
-            input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
-            totalsurprisal = 0.0
-            firstword = sentence[0]
-            input.fill_(firstword.item())
+    for i, sentence in enumerate(sentences):
+        # Prepare for surgery.
+        surgery_idx = surgery_idxs[i] if args.do_surgery else None
 
-            outf.write("%i\t%i\t%s\t%f\n" % (i + 1, 1, dictionary.idx2word[firstword.item()], 0.))
+        torch.manual_seed(args.seed)
+        hidden = model.init_hidden(1)
+        input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
+        totalsurprisal = 0.0
+        firstword = sentence[0]
+        input.fill_(firstword.item())
 
-            output, hidden = model(input,hidden)
+        results.append((i + 1, 1, dictionary.idx2word[firstword.item()], 0.))
+
+        output, hidden = model(input,hidden)
+        word_weights = output.squeeze().div(args.temperature).exp().cpu()
+        word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
+        for j, word in enumerate(sentence[1:len(prefix)]):
+            if j + 1 == surgery_idx:
+                # Perform surgery on hidden state.
+                L.info("Performing surgery for sentence %i at token: %s", i, word)
+                pre_hidden_norm = torch.norm(hidden[1][1][0])
+                hidden = do_surgery(hidden, surgery_decoder, args.surgery_scale)
+                L.info("Norm change: %s -> %s", pre_hidden_norm, torch.norm(hidden[1][1][0]))
+
+            word_surprisal = word_surprisals[word].item()
+            results.append((i + 1, j + 2, dictionary.idx2word[word.item()], word_surprisal))
+            input.fill_(word.item())
+            output, hidden = model(input, hidden)
+
             word_weights = output.squeeze().div(args.temperature).exp().cpu()
             word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
-            for j, word in enumerate(sentence[1:len(prefix)]):
-                if j + 1 == surgery_idx:
-                    # Perform surgery on hidden state.
-                    L.info("Performing surgery for sentence %i at token: %s", i, word)
-                    pre_hidden_norm = torch.norm(hidden[1][1][0])
-                    hidden = do_surgery(hidden, surgery_decoder, args.surgery_scale)
-                    L.info("Norm chacnge: %s -> %s", pre_hidden_norm, torch.norm(hidden[1][1][0]))
 
-                word_surprisal = word_surprisals[word].item()
-                outf.write("%i\t%i\t%s\t%f\n" % (i + 1, j + 2, dictionary.idx2word[word.item()], word_surprisal))
-                input.fill_(word.item())
-                output, hidden = model(input, hidden)
+    results = pd.DataFrame(results, columns=["sentence_id", "token_id", "token", "surprisal"])
 
-                word_weights = output.squeeze().div(args.temperature).exp().cpu()
-                word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
+    if args.outf is not None:
+        results.to_csv(args.outf, sep="\t")
+    if args.surgery_outf is not None:
+        with args.surgery_outf.open("wb") as surgery_f:
+            pickle.dump({"surgery_coef": args.surgery_scale, "results": results}, surgery_f)

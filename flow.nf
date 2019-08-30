@@ -79,8 +79,7 @@ python3 ${omBaseDir}/garden_path/avg_suprisal_vbd_decoder.py \
     ${params.experiment_file} \
     ${surprisals_file} \
     --model_path ${params.model_checkpoint_path} \
-    --data_path ${params.model_data_path} \
-    --file_identifier ${file_prefix}
+    --data_path ${params.model_data_path}
     """
 }
 
@@ -107,9 +106,8 @@ python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     --do_surgery True \
     --surgery_idx_file ${extract_idxs_file} \
     --surgery_coef_file best_r2_coefs_decoder.pkl \
-    --surgical_difference ${surgery_coef} \
+    --surgery_scale ${surgery_coef} \
     --surgery_outf surgery_out.pkl \
-    --file_identifier ${file_prefix} \
     --gradient_type weight
     """
 }

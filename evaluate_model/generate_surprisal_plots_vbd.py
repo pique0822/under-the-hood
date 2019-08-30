@@ -1,17 +1,20 @@
+import argparse
+from collections import defaultdict
+from pathlib import Path
+import pickle
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import yaml
 
 from scipy import stats
 
-import argparse
 
 parser = argparse.ArgumentParser(description='Suprisal plot generator')
-parser.add_argument('--decrease_file_base', type=str,
-                    help='base name for decrease files')
-parser.add_argument('--decrease_file_unique_ids', nargs='+', help='<Required> Set flag', required=False)
-parser.add_argument('--surgical_decrease', type=bool, default=False,
-                    help='boolean determining if surgical decrease should be plotted')
+parser.add_argument("experiment_file", type=Path)
+parser.add_argument("surprisal_file", type=Path)
+parser.add_argument("--surgical_files", type=Path, nargs="+")
 parser.add_argument('--file_title', type=str, default = '',
                     help='Title to be used for plot title specification')
 parser.add_argument('--save_file', type=str, default = 'surprisal_plots',
@@ -26,9 +29,47 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
 ######
 
-data = pd.read_csv('../garden_path/data/verb-ambiguity-with-intervening-phrase.csv')
+experiment = yaml.load(args.experiment_file)["experiment"]
 
-surp_df = pd.read_csv("surprisal_rc.csv")
+stimuli_path = Path(args.experiment_file.name).parent / experiment["stimuli"]
+data = pd.read_csv(stimuli_path, header=0, index_col=0).sort_index()
+surp_df = pd.read_csv(args.surprisal_file, header=0, index_col=["sentence_id", "token_id"], sep="\t").sort_index()
+
+
+# List of (sentence_id, condition, model_spec, region, surprisal)
+graph_data = []
+
+# Make a map from stimulus ID and condition to sentence ID as it will appear in
+# surprisal data.
+#
+# TODO make sure ordering is stable from YAML loader .. or better, just specify
+# a list in the YAML :)
+items = [(idx, condition)
+         for idx in stimuli.index
+         for condition in experiment["conditions"].keys()]
+sentence_to_item = {i + 1: item for i, item in enumerate(items)}
+
+
+# First aggregate surprisal data from the base model.
+for sentence_id, surprisals in surp_df.groupby("sentence_id"):
+    item_idx, condition = surp_df.loc[sentence_to_item[sentence_id]]
+    item = surp_df.loc[item_idx]
+
+    i = 0
+    for region in experiment["conditions"][condition]["prefix_columns"]:
+        region_tokens = item[region].strip().split(" ")
+        region_surprisals = surprisals[i:i + len(region_tokens)]
+        assert len(region_tokens) == len(region_surprisals)
+
+        graph_data.append((sentence_id, condition, "baseline", sum(region_surprisals)))
+
+# Now add surprisal data from the surgery models.
+for surgical_file in args.surgical_files:
+    with surgical_file.open("rb") as surgical_f:
+        surgical_data = pickle.load(surgical_f)
+        # TODO Read surgery coef and add to loop above
+        key = "surgery_%f" % surgical_data["surgery_coef"]
+
 
 total_surprisal = 0
 previous_prefix = None
