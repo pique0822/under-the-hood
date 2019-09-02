@@ -50,3 +50,21 @@ experiment:
             - 0.1
             - 1
             - 10
+
+    plot:
+        times:
+            - Start:
+                - Start
+            - Noun:
+                - Noun
+            - Unreduced content:
+                - Unreduced content
+            - First verb:
+                - Ambiguous verb
+                - Unambiguous verb
+            - RC contents:
+                - RC contents
+            - Second verb:
+                - Disambiguator
+            - End:
+                - End
