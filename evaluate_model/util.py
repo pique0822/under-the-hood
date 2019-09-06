@@ -25,7 +25,7 @@ class Experiment(object):
         self.stimulus_regions = list(self.stimuli.columns)
 
         # Run validation checks.
-        for condition in self.conditions:
+        for condition in self.conditions.values():
             self._check_region_refs(condition["prefix_columns"])
             self._check_region_refs([condition["extract_column"]])
             self._check_region_refs([condition["measure_column"]])
@@ -34,8 +34,10 @@ class Experiment(object):
             self._check_region_refs(regions)
 
     @classmethod
-    def from_yaml(self, yaml_path):
-        return cls(yaml.load(yaml_path), yaml_path.parent)
+    def from_yaml(cls, yaml_path):
+        with yaml_path.open("r") as yaml_f:
+            yaml_data = yaml.load(yaml_f, Loader=yaml.SafeLoader)
+        return cls(yaml_data, yaml_path.parent)
 
     def _load_stimuli(self, path):
         return pd.read_csv(path, header=0, index_col=0).sort_index()

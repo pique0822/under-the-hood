@@ -10,7 +10,7 @@ from util import Experiment
 def main(args):
     experiment = Experiment.from_yaml(args.experiment_file)
     for sentence_str, extract_idx in experiment.get_sentences(yield_extract_idxs=True):
-        args.outf.write(sentence + "\n")
+        args.outf.write(sentence_str + "\n")
 
         if args.extract_idx_outf:
             args.extract_idx_outf.write("%i\n" % extract_idx)
@@ -18,7 +18,7 @@ def main(args):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("experiment_file", type=argparse.FileType("r"))
+    p.add_argument("experiment_file", type=Path)
     p.add_argument("--outf", type=argparse.FileType("w"))
     p.add_argument("--extract_idx_outf", type=argparse.FileType("w"),
             help=("If provided, write a single integer per line "

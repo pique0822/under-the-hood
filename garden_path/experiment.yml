@@ -53,18 +53,18 @@ experiment:
 
     plot:
         times:
-            - Start:
+            Start:
                 - Start
-            - Noun:
+            Noun:
                 - Noun
-            - Unreduced content:
+            Unreduced content:
                 - Unreduced content
-            - First verb:
+            First verb:
                 - Ambiguous verb
                 - Unambiguous verb
-            - RC contents:
+            RC contents:
                 - RC contents
-            - Second verb:
+            Second verb:
                 - Disambiguator
-            - End:
+            End:
                 - End
