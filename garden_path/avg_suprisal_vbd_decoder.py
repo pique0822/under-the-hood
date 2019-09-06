@@ -1,34 +1,26 @@
-
+import argparse
 from collections import Counter, defaultdict
+import logging
+import os
+from pathlib import Path
+import pickle
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import sklearn.linear_model as sk
+import sklearn.metrics as skm
 import torch
 from torch import nn
 from torch.nn import functional as F
+from tqdm import tqdm
 
 import model
 import data
-
-import matplotlib.pyplot as plt
-
-import pdb
-
-import sklearn.linear_model as sk
-import numpy as np
-
-import pandas as pd
-
-import os
-from pathlib import Path
 import utils
 
-import sklearn.metrics as skm
+from util import Experiment, read_surprisal_df
 
-import pickle
-import yaml
-from tqdm import tqdm
-
-import argparse
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +39,6 @@ parser.add_argument('--smoothed_significance', type=bool, default=False,
             help='Smoothed significance flag')
 args = parser.parse_args()
 
-ROOT = Path(__file__).absolute().parent.parent
-
-
-load_files = False
 
 np.random.seed(args.seed)
 
@@ -68,11 +56,8 @@ corpus = data.Corpus(args.data_path)
 ntokens = corpus.dictionary.__len__()
 
 
-with open(args.experiment_file, "r") as exp_f:
-    experiment = yaml.load(exp_f)["experiment"]
-stimuli_path = Path(args.experiment_file).parent / experiment["stimuli"]
-df = pd.read_csv(stimuli_path, header=0, index_col=0).sort_index()
-surp_df = pd.read_csv(args.surprisal_file, header=0, index_col=["sentence_id", "token_id"], sep="\t").sort_index()
+experiment = Experiment.from_yaml(args.experiment_file)
+surp_df = read_surprisal_df(args.surprisal_file)
 
 
 # collect average surprisal for a given prefix.

@@ -8,9 +8,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
-import yaml
-
 from scipy import stats
+
+from util import Experiment, read_surprisal_df
 
 
 parser = argparse.ArgumentParser(description='Suprisal plot generator')
@@ -31,12 +31,10 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
 ######
 
-experiment = yaml.load(args.experiment_file)["experiment"]
+experiment = Experiment.from_yaml(args.experiment_file)
 
-stimuli_path = Path(args.experiment_file.name).parent / experiment["stimuli"]
-data = pd.read_csv(stimuli_path, header=0, index_col=0).sort_index()
 surp_dfs = {
-    "baseline": pd.read_csv(args.surprisal_file, header=0, index_col=["sentence_id", "token_id"], sep="\t").sort_index()
+    "baseline": read_surprisal_df(args.surprisal_file),
 }
 
 # Now add surprisal data from the surgery models.
