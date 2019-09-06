@@ -70,7 +70,9 @@ process learnBaseDecoder {
     file(surprisals_file) from surprisals_ch
 
     output:
-    set file("best_mse_coefs_decoder.pkl"), file("best_r2_coefs_decoder.pkl"), file("significant_coefs_decoder.pkl") into base_decoder_ch
+    set file("best_mse_coefs.pkl"), file("best_r2_coefs.pkl"), \
+        file("significant_coefs.pkl") \
+        into base_decoder_ch
 
     script:
     """
@@ -89,7 +91,7 @@ process doSurgery {
 
     input:
     set val(surgery_coef), \
-        file("best_mse_coefs_decoder.pkl"), file("best_r2_coefs_decoder.pkl"), file("significant_coefs_decoder.pkl"), \
+        file("best_mse_coefs.pkl"), file("best_r2_coefs.pkl"), file("significant_coefs.pkl"), \
         file(prefixes_file), file(extract_idxs_file) \
         from surgery_coefs.combine(base_decoder_ch).combine(prefixes_ch)
 
@@ -105,7 +107,7 @@ python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     --surprisalmode True \
     --do_surgery True \
     --surgery_idx_file ${extract_idxs_file} \
-    --surgery_coef_file best_r2_coefs_decoder.pkl \
+    --surgery_coef_file best_r2_coefs.pkl \
     --surgery_scale ${surgery_coef} \
     --surgery_outf surgery_out.pkl \
     --gradient_type weight

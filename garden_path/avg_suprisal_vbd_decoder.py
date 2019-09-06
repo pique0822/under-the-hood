@@ -33,8 +33,6 @@ parser.add_argument('--model_path', type=str,
 parser.add_argument("--data_path", help="path to model data")
 parser.add_argument('--seed', type=int, default=1111,
             help='random seed')
-parser.add_argument('--file_identifier', type=str, default='TEST',
-                    help='unique identifier for the files generated in this method [DO NOT USE SPACES]')
 parser.add_argument('--smoothed_significance', type=bool, default=False,
             help='Smoothed significance flag')
 args = parser.parse_args()
@@ -282,9 +280,9 @@ else:
 # for c in significant_coef_indices:
 #     print(c,best_R2_reg.coef_[c])
 
-pickle.dump(best_R2_reg,open('best_r2_coefs_'+args.file_identifier+'.pkl','wb+'))
-pickle.dump(best_mse_reg,open('best_mse_coefs_'+args.file_identifier+'.pkl','wb+'))
-pickle.dump(significant_coef_indices,open('significant_coefs_'+args.file_identifier+'.pkl','wb+'))
+pickle.dump(best_R2_reg,open('best_r2_coefs.pkl','wb+'))
+pickle.dump(best_mse_reg,open('best_mse_coefs.pkl','wb+'))
+pickle.dump(significant_coef_indices,open('significant_coefs.pkl','wb+'))
 
 for condition in experiment["conditions"]:
     X_test, y_test = cells[condition], targets[condition]
