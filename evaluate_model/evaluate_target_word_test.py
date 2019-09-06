@@ -73,6 +73,7 @@ if torch.cuda.is_available():
     else:
         torch.cuda.manual_seed(args.seed)
 
+L.info("Loading language model from checkpoint %s", args.checkpoint)
 with open(args.checkpoint, 'rb') as f:
     if args.cuda:
         model = torch.load(f)
@@ -88,6 +89,8 @@ else:
 
 dictionary = dictionary_corpus.Dictionary(args.data)
 vocab_size = len(dictionary)
+
+L.info("Model ready.")
 
 
 def do_surgery(hidden, decoder, scale=1.0):
@@ -105,6 +108,7 @@ def do_surgery(hidden, decoder, scale=1.0):
 
 ###
 prefix = dictionary_corpus.tokenize(dictionary, args.prefixfile)
+L.info("Tokenization complete.")
 #print(prefix.shape)
 #for w in prefix:
 #    print(dictionary.idx2word[w.item()])
