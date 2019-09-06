@@ -16,11 +16,7 @@ from util import Experiment, read_surprisal_df
 parser = argparse.ArgumentParser(description='Suprisal plot generator')
 parser.add_argument("experiment_file", type=Path)
 parser.add_argument("surprisal_file", type=Path)
-parser.add_argument("--surgical_files", type=Path, nargs="+")
-parser.add_argument('--file_title', type=str, default = '',
-                    help='Title to be used for plot title specification')
-parser.add_argument('--save_file', type=str, default = 'surprisal_plots',
-                    help='file to be used for plot saving')
+parser.add_argument("--surgery_files", type=Path, nargs="+")
 args = parser.parse_args()
 
 # IGNORE WARNINGS
@@ -38,7 +34,7 @@ surp_dfs = {
 }
 
 # Now add surprisal data from the surgery models.
-for surgical_file in args.surgical_files:
+for surgical_file in args.surgery_files:
     with surgical_file.open("rb") as surgical_f:
         surgical_data = pickle.load(surgical_f)
         # TODO Read surgery coef and add to loop above
@@ -47,42 +43,50 @@ for surgical_file in args.surgical_files:
 
 
 # List of (sentence_id, condition, model_spec, region, surprisal)
-graph_data = []
+graph_data = {}
 
-# Make a map from stimulus ID and condition to sentence ID as it will appear in
-# surprisal data.
-#
-# TODO make sure ordering is stable from YAML loader .. or better, just specify
-# a list in the YAML :)
-items = [(idx, condition)
-         for idx in stimuli.index
-         for condition in experiment["conditions"].keys()]
-sentence_to_item = {i + 1: item for i, item in enumerate(items)}
-
-
-# Aggregate surprisal data into a single graph-friendly dataframe.
 for model_key, surp_df in surp_dfs.items():
-    for sentence_id, surprisals in surp_df.groupby("sentence_id"):
-        item_idx, condition = surp_df.loc[sentence_to_item[sentence_id]]
-        item = surp_df.loc[item_idx]
+    # Collect surprisal data for this model
+    graph_data[model_key] = experiment.collect_sentence_surprisals(surp_df)
 
-        i = 0
-        for region in experiment["conditions"][condition]["prefix_columns"]:
-            region_tokens = item[region].strip().split(" ")
-            region_surprisals = surprisals[i:i + len(region_tokens)]
-            assert len(region_tokens) == len(region_surprisals)
+graph_data = pd.concat(graph_data, keys=["model"])
+print(graph_data)
 
-            graph_data.append((sentence_id, condition, model_key, region, sum(region_surprisals)))
+# # Make a map from stimulus ID and condition to sentence ID as it will appear in
+# # surprisal data.
+# #
+# # TODO make sure ordering is stable from YAML loader .. or better, just specify
+# # a list in the YAML :)
+# items = [(idx, condition)
+#          for idx in stimuli.index
+#          for condition in experiment["conditions"].keys()]
+# sentence_to_item = {i + 1: item for i, item in enumerate(items)}
 
 
-graph_data = pd.DataFrame(graph_data, columns=["sentence_id", "condition", "model", "region", "sum_surprisal"])
+# # Aggregate surprisal data into a single graph-friendly dataframe.
+# for model_key, surp_df in surp_dfs.items():
+#     for sentence_id, surprisals in surp_df.groupby("sentence_id"):
+#         item_idx, condition = surp_df.loc[sentence_to_item[sentence_id]]
+#         item = surp_df.loc[item_idx]
+
+#         i = 0
+#         for region in experiment["conditions"][condition]["prefix_columns"]:
+#             region_tokens = item[region].strip().split(" ")
+#             region_surprisals = surprisals[i:i + len(region_tokens)]
+#             assert len(region_tokens) == len(region_surprisals)
+
+#             graph_data.append((sentence_id, condition, model_key, region, sum(region_surprisals)))
+
+
 # Now map regions to cross-condition time-points.
 graph_times = experiment["plot"]["times"]
 region_to_time = {region: time for region in time_regions
-                  for time, time_regions in graph_times.items()}
+                  for time, time_regions in experiment.plot_config["times"].items()}
 from pprint import pprint
 pprint(region_to_time)
 
 graph_data["time"] = graph_data.region.transform(lambda x: region_to_time[x])
 
-# TODO graph line plots.
+g = sns.FacetGrid(data=graph_data, row="condition")
+g.map(sns.lineplot, "time", "agg_surprisal", "model").add_legend()
+g.savefig("plot.png")

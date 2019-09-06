@@ -126,7 +126,6 @@ process renderPlots {
     """
 #!/usr/bin/env bash
 python3 ${omBaseDir}/evaluate_model/generate_surprisal_plots_vbd.py \
-    --surgery_files *.pkl \
-    --surgical_decrease True
+    --surgery_files *.pkl
     """
 }
