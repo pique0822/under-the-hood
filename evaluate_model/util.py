@@ -2,11 +2,14 @@
 Shared experimental utilities.
 """
 
+from collections import namedtuple
 from pathlib import Path
 
 import pandas as pd
 import yaml
 
+
+Sentence = namedtuple("Sentence", ["text", "item_idx", "condition", "extract_idx"])
 
 class Experiment(object):
 
@@ -52,16 +55,11 @@ class Experiment(object):
             ("Provided region list (%s) is a superset of regions in input stimuli (%s)"
              % (",".join(region_list), ",".join(self.stimulus_regions)))
 
-    def get_sentences(self, yield_extract_idxs=False):
+    def get_sentences(self):
         """
-        Generate individual sentence stimuli by crossing items with conditions.
-
-        Args:
-            yield_extract_idxs: If `True`, yield tuples `(sentence_str,
-              extract_idx)`, where `extract_idx` is the zero-based token index
-              of the final token of the extract column for this sentence.
+        Generate individual Sentence objects by crossing items with conditions.
         """
-        for _, row in self.stimuli.iterrows():
+        for item_idx, row in self.stimuli.iterrows():
             for name, condition in self.conditions.items():
                 prefix = []
                 token_idx = 0
@@ -80,19 +78,35 @@ class Experiment(object):
                 sentence = prefix + [row[condition["measure_column"]].strip(), "<eos>"]
                 sentence = " ".join(sentence)
 
-                if yield_extract_idxs:
-                    yield sentence, extract_column_token_idx
-                else:
-                    yield sentence
+                yield Sentence(text=sentence, condition=name,
+                               item_idx=item_idx,
+                               extract_idx=extract_column_token_idx)
 
-    def collect_sentence_surprisals(self, surprisal_df):
+    def collect_sentence_surprisals(self, surprisal_df, agg=sum):
         """
-        Given a surprisal dataframe, link these surprisals to individual
-        sentences and items.
+        Join stimuli with computed surprisals, aggregating surprisal over
+        stimulus regions.
+
+        Args:
+            agg: Aggregation function to apply to the sequence of tokens in
+                each region of each sentence
         """
+        ret_df = []
         for idx, sentence in enumerate(self.get_sentences()):
             sentence_surprisals = surprisal_df.loc[idx + 1]
             sentence_tokens = sentence.split(" ")
+
+            item = self.stimuli.iloc[sentence.item_idx]
+            i = 0
+            for region in self.conditions[sentence.condition]["prefix_columns"]:
+                region_tokens = item[region].strip().split(" ")
+                region_surprisals = sentence_surprisals[i:i + len(region_tokens)]
+                assert len(region_tokens) == len(region_surprisals)
+
+                ret_df.append((idx, sentence.item_idx, sentence.condition, region, agg(region_surprisals)))
+
+        return pd.DataFrame(ret_df, columns=["index", "item_idx", "condition", "region", "agg_surprisal"]) \
+                .set_index("index")
 
 
 def read_surprisal_df(path):

@@ -9,11 +9,11 @@ from util import Experiment
 
 def main(args):
     experiment = Experiment.from_yaml(args.experiment_file)
-    for sentence_str, extract_idx in experiment.get_sentences(yield_extract_idxs=True):
-        args.outf.write(sentence_str + "\n")
+    for sentence in experiment.get_sentences():
+        args.outf.write(sentence.text + "\n")
 
         if args.extract_idx_outf:
-            args.extract_idx_outf.write("%i\n" % extract_idx)
+            args.extract_idx_outf.write("%i\n" % sentence.extract_idx)
 
 
 if __name__ == "__main__":
