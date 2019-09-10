@@ -1,0 +1,114 @@
+# Test the influence of by-phrases in the RC -- this should increase
+# probability of RC analysis, and should hold up under surgery.
+
+experiment:
+    name: "MV/RC garden pathing with by-phrases"
+    clean_name: "by-phrase"
+    stimuli: ../stimuli/verb-ambiguity-with-intervening-phrase.csv
+    conditions:
+        ambiguous_reduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Ambiguous verb
+                - RC contents
+            extract_column: Ambiguous verb
+            measure_column: Disambiguator
+        ambiguous_unreduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unreduced content
+                - Ambiguous verb
+                - RC contents
+            extract_column: Ambiguous verb
+            measure_column: Disambiguator
+        unambiguous_reduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unambiguous verb
+                - RC contents
+            extract_column: Unambiguous verb
+            measure_column: Disambiguator
+        unambiguous_unreduced:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unreduced content
+                - Unambiguous verb
+                - RC contents
+            extract_column: Unambiguous verb
+            measure_column: Disambiguator
+
+        ambiguous_reduced_by:
+            prefix_columns:
+                - Start
+                - Noun
+                - Ambiguous verb
+                - RC contents
+                - RC by-phrase
+            extract_column: Ambiguous verb
+            measure_column: Disambiguator
+        ambiguous_unreduced_by:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unreduced content
+                - Ambiguous verb
+                - RC contents
+                - RC by-phrase
+            extract_column: Ambiguous verb
+            measure_column: Disambiguator
+        unambiguous_reduced_by:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unambiguous verb
+                - RC contents
+                - RC by-phrase
+            extract_column: Unambiguous verb
+            measure_column: Disambiguator
+        unambiguous_unreduced_by:
+            prefix_columns:
+                - Start
+                - Noun
+                - Unreduced content
+                - Unambiguous verb
+                - RC contents
+                - RC by-phrase
+            extract_column: Unambiguous verb
+            measure_column: Disambiguator
+
+
+    decoder:
+        train_conditions:
+            - ambiguous_reduced
+            - ambiguous_unreduced
+            - unambiguous_reduced
+            - unambiguous_unreduced
+        cross_validation_folds: 2
+
+    surgery:
+        coefficients:
+            - 0.1
+            - 1
+            - 10
+
+    plot:
+        times:
+            Start:
+                - Start
+            Noun:
+                - Noun
+            Unreduced content:
+                - Unreduced content
+            First verb:
+                - Ambiguous verb
+                - Unambiguous verb
+            RC contents:
+                - RC contents
+            Second verb:
+                - Disambiguator
+            End:
+                - End
