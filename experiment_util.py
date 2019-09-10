@@ -92,15 +92,16 @@ class Experiment(object):
                 each region of each sentence
         """
         ret_df = []
+        surprisal_df = surprisal_df.reset_index().set_index(["sentence_id", "token_id"])
         for idx, sentence in enumerate(self.get_sentences()):
             sentence_surprisals = surprisal_df.loc[idx + 1]
-            sentence_tokens = sentence.split(" ")
+            sentence_tokens = sentence.text.split(" ")
 
             item = self.stimuli.iloc[sentence.item_idx]
             i = 0
             for region in self.conditions[sentence.condition]["prefix_columns"]:
                 region_tokens = item[region].strip().split(" ")
-                region_surprisals = sentence_surprisals[i:i + len(region_tokens)]
+                region_surprisals = sentence_surprisals[i:i + len(region_tokens)].surprisal
                 assert len(region_tokens) == len(region_surprisals)
 
                 ret_df.append((idx, sentence.item_idx, sentence.condition, region, agg(region_surprisals)))

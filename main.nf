@@ -18,11 +18,9 @@ params.model_data_path = "${omBaseDir}/data/colorlessgreenRNNs"
 
 surgery_coefs = Channel.from(experiment_yaml["surgery"]["coefficients"])
 
+params.output_dir = "output"
+
 //////////
-
-// prefix for tmp output files. no reason to change this
-file_prefix = "decoder"
-
 
 // Given an experiment spec, generate prefixes for LM evaluation.
 process generatePrefixes {
@@ -65,11 +63,13 @@ python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     """
 }
 
+surprisals_ch.into { surprisals_for_decoder_ch; surprisals_for_plot_ch }
+
 process learnBaseDecoder {
     label "om_deepo"
 
     input:
-    file(surprisals_file) from surprisals_ch
+    file(surprisals_file) from surprisals_for_decoder_ch
 
     output:
     set file("best_mse_coefs.pkl"), file("best_r2_coefs.pkl"), \
@@ -99,7 +99,7 @@ process doSurgery {
         from surgery_coefs.combine(base_decoder_ch).combine(prefixes_ch)
 
     output:
-    file("surgery_out.pkl") into surgery_ch
+    file("surgery_out_*.pkl") into surgery_ch
 
     """
 #!/usr/bin/env bash
@@ -113,7 +113,7 @@ python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     --surgery_idx_file ${extract_idxs_file} \
     --surgery_coef_file best_r2_coefs.pkl \
     --surgery_scale ${surgery_coef} \
-    --surgery_outf surgery_out.pkl \
+    --surgery_outf surgery_out_${surgery_coef}.pkl \
     --gradient_type weight
     """
 }
@@ -121,8 +121,10 @@ python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
 
 process renderPlots {
     label "local"
+    publishDir params.output_dir
 
     input:
+    file("surprisals.txt") from surprisals_for_plot_ch
     file("*.pkl") from surgery_ch.collect()
 
     output:
@@ -133,6 +135,7 @@ process renderPlots {
 #!/usr/bin/env bash
 export PYTHONPATH="${omBaseDir}:\$PYTHONPATH"
 python3 ${omBaseDir}/evaluate_model/generate_surprisal_plots_vbd.py \
+    ${params.experiment_file} surprisals.txt \
     --surgery_files *.pkl
     """
 }
