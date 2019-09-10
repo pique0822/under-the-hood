@@ -19,14 +19,14 @@ import model
 import data
 import utils
 
-from util import Experiment, read_surprisal_df
+from experiment_util import Experiment, read_surprisal_df
 
 
 logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser(description='Average Surprisal Decoder')
-parser.add_argument("experiment_file", help="path to stimuli csv")
-parser.add_argument("surprisal_file", help="path to surprisals output for these stimuli")
+parser.add_argument("experiment_file", type=Path, help="path to stimuli csv")
+parser.add_argument("surprisal_file", type=Path, help="path to surprisals output for these stimuli")
 parser.add_argument('--model_path', type=str,
             help='model location',
             default='/om/group/cpl/language-models/colorlessgreenRNNs/hidden650_batch128_dropout0.2_lr20.0.pt')
@@ -86,14 +86,14 @@ results_by_condition = defaultdict(list)
 print('=== TESTING MODEL ===')
 # Reconstruct the sentences from the original stimuli data now.
 # For each condition, retrieve the relevant model state + surprisal.
-for idx, row in tqdm(list(df.iterrows())):
+for idx, row in tqdm(list(experiment.stimuli.iterrows())):
     main_verb = row['Disambiguator'].strip().lstrip()
     if main_verb in corpus.dictionary.word2idx:
         main_verb_idx = corpus.dictionary.word2idx[main_verb]
     else:
         main_verb_idx = corpus.dictionary.word2idx["<unk>"]
 
-    for condition, metadata in experiment["conditions"].items():
+    for condition, metadata in experiment.conditions.items():
         # prepare sentence prefix string for lookup
         prefix = " ".join(row[col].strip() for col in metadata["prefix_columns"])
 
@@ -131,7 +131,7 @@ targets = {condition: np.array([surprisal for _, _, surprisal in items])
            for condition, items in results_by_condition.items()}
 
 # items from which conditions should be used to train the decoder?
-train_conditions = experiment["decoder"]["train_conditions"]
+train_conditions = experiment.decoder_config["train_conditions"]
 
 X = np.concatenate([cells[cond] for cond in train_conditions])
 y = np.concatenate([targets[cond] for cond in train_conditions])
@@ -143,7 +143,7 @@ coef_count = {}
 shuffled_indices = np.arange(len(X))
 np.random.shuffle(shuffled_indices)
 
-cv_folds = experiment["decoder"]["cross_validation_folds"]
+cv_folds = experiment.decoder_config["cross_validation_folds"]
 print('=== '+str(cv_folds)+' Experiment Significant ===')
 print('Training on %i cell states of %i' % (int((cv_folds - 1)/cv_folds*n), n))
 
@@ -284,6 +284,6 @@ pickle.dump(best_R2_reg,open('best_r2_coefs.pkl','wb+'))
 pickle.dump(best_mse_reg,open('best_mse_coefs.pkl','wb+'))
 pickle.dump(significant_coef_indices,open('significant_coefs.pkl','wb+'))
 
-for condition in experiment["conditions"]:
+for condition in experiment.conditions:
     X_test, y_test = cells[condition], targets[condition]
     print("R^2 score for condition %s: %f" % (condition, best_R2_reg.score(X_test, y_test)))

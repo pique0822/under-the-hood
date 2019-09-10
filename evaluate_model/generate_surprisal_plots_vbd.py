@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
-from util import Experiment, read_surprisal_df
+from experiment_util import Experiment, read_surprisal_df
 
 
 parser = argparse.ArgumentParser(description='Suprisal plot generator')

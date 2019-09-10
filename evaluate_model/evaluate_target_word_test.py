@@ -102,7 +102,8 @@ def do_surgery(hidden, decoder, scale=1.0):
     elif args.gradient_type == "loss":
         raise ValueError("not supported")
 
-    hidden[1][1][0, :] -= scale * gradient
+    # TODO don't recreate tensor every time
+    hidden[1][1][0, :] -= scale * torch.tensor(gradient)
     return hidden
 
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from util import Experiment
+from experiment_util import Experiment
 
 
 def main(args):

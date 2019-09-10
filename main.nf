@@ -34,6 +34,7 @@ process generatePrefixes {
     script:
     """
 #!/usr/bin/env bash
+export PYTHONPATH="${omBaseDir}:\$PYTHONPATH"
 python3 ${omBaseDir}/evaluate_model/generate_prefixes.py \
     ${params.experiment_file} \
     --outf prefixes.txt \
@@ -54,6 +55,7 @@ process getSurprisals {
     script:
     """
 #!/usr/bin/env bash
+export PYTHONPATH="${omBaseDir}:\$PYTHONPATH"
 python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     --data ${params.model_data_path} \
     --checkpoint ${params.model_checkpoint_path} \
@@ -77,6 +79,7 @@ process learnBaseDecoder {
     script:
     """
 #!/usr/bin/env bash
+export PYTHONPATH="${omBaseDir}:\$PYTHONPATH"
 python3 ${omBaseDir}/garden_path/avg_suprisal_vbd_decoder.py \
     ${params.experiment_file} \
     ${surprisals_file} \
@@ -100,6 +103,7 @@ process doSurgery {
 
     """
 #!/usr/bin/env bash
+export PYTHONPATH="${omBaseDir}:\$PYTHONPATH"
 python3 ${omBaseDir}/evaluate_model/evaluate_target_word_test.py \
     --data ${params.model_data_path} \
     --checkpoint ${params.model_checkpoint_path} \
@@ -127,6 +131,7 @@ process renderPlots {
     script:
     """
 #!/usr/bin/env bash
+export PYTHONPATH="${omBaseDir}:\$PYTHONPATH"
 python3 ${omBaseDir}/evaluate_model/generate_surprisal_plots_vbd.py \
     --surgery_files *.pkl
     """
