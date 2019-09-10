@@ -175,7 +175,7 @@ if args.surprisalmode:
         output, hidden = model(input,hidden)
         word_weights = output.squeeze().div(args.temperature).exp().cpu()
         word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
-        for j, word in enumerate(sentence[1:len(prefix)]):
+        for j, word in enumerate(sentence[1:]):
             if j + 1 == surgery_idx:
                 # Perform surgery on hidden state.
                 L.info("Performing surgery for sentence %i at token: %s", i, word)
