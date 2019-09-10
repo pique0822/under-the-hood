@@ -43,7 +43,7 @@ class Experiment(object):
         return cls(yaml_data, yaml_path.parent)
 
     def _load_stimuli(self, path):
-        return pd.read_csv(path, header=0, index_col=0).sort_index()
+        return pd.read_csv(path, header=0, index_col=0).fillna("").sort_index()
 
     def _check_condition_refs(self, condition_list):
         assert set(condition_list).issubset(set(self.conditions.keys())), \
