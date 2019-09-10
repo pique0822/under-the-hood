@@ -1,6 +1,9 @@
+# Base MV/RC garden pathing experiment.
+
 experiment:
     name: "MV/RC garden pathing"
-    stimuli: data/verb-ambiguity-with-intervening-phrase.csv
+    clean_name: "base"
+    stimuli: ../stimuli/verb-ambiguity-with-intervening-phrase.csv
     conditions:
         ambiguous_reduced:
             prefix_columns:

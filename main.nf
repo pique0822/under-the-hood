@@ -5,9 +5,10 @@ import org.yaml.snakeyaml.Yaml
 // baseDir as prepared by nextflow references a particular FS share. not good.
 omBaseDir = "/om/user/jgauthie/under-the-hood"
 
-params.experiment_file = "${omBaseDir}/garden_path/experiment.yml"
-
+params.experiment_file = "${omBaseDir}/experiments/base.yml"
 def Map experiment_yaml = new Yaml().load((params.experiment_file as File).text)["experiment"] as Map
+params.experiment_name = experiment_yaml.name
+params.experiment_clean_name = experiment_yaml.clean_name
 
 stimuli_file = new File((params.experiment_file as File).getParentFile(), experiment_yaml["stimuli"])
 
@@ -18,7 +19,7 @@ params.model_data_path = "${omBaseDir}/data/colorlessgreenRNNs"
 
 surgery_coefs = Channel.from(experiment_yaml["surgery"]["coefficients"])
 
-params.output_dir = "output"
+params.output_dir = "output/${params.experiment_clean_name}"
 
 //////////
 
