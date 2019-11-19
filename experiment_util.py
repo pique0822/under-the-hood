@@ -43,7 +43,13 @@ class Experiment(object):
         return cls(yaml_data, yaml_path.parent)
 
     def _load_stimuli(self, path):
-        return pd.read_csv(path, header=0, index_col=0).fillna("").sort_index()
+        ret = pd.read_csv(path, header=0).fillna("")
+        if "source" in ret.columns:
+            index = ["source", "idx"]
+        else:
+            index = ["idx"]
+
+        return ret.set_index(index).sort_index()
 
     def _check_condition_refs(self, condition_list):
         assert set(condition_list).issubset(set(self.conditions.keys())), \
@@ -97,7 +103,7 @@ class Experiment(object):
             sentence_surprisals = surprisal_df.loc[idx + 1]
             sentence_tokens = sentence.text.split(" ")
 
-            item = self.stimuli.iloc[sentence.item_idx]
+            item = self.stimuli.loc[sentence.item_idx]
             i = 0
             for region in self.conditions[sentence.condition]["prefix_columns"]:
                 region_tokens = item[region].strip().split(" ")
