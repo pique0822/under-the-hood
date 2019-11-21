@@ -15,6 +15,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from tqdm import tqdm
 
 import dictionary_corpus
 from utils import repackage_hidden, batchify, get_batch
@@ -159,7 +160,7 @@ if args.surprisalmode:
 
     results = []
 
-    for i, sentence in enumerate(sentences):
+    for i, sentence in tqdm(list(enumerate(sentences))):
         # Prepare for surgery.
         surgery_idx = surgery_idxs[i] if args.do_surgery else None
 
