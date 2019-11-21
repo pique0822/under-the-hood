@@ -130,6 +130,7 @@ process renderPlots {
 
     output:
     file "*.png"
+    file "graph_data.csv"
 
     script:
     """

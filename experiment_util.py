@@ -107,10 +107,11 @@ class Experiment(object):
             i = 0
             for region in self.conditions[sentence.condition]["prefix_columns"]:
                 region_tokens = item[region].strip().split(" ")
-                region_surprisals = sentence_surprisals[i:i + len(region_tokens)].surprisal
+                region_surprisals = sentence_surprisals.iloc[i:i + len(region_tokens)].surprisal
                 assert len(region_tokens) == len(region_surprisals)
 
                 ret_df.append((idx, sentence.item_idx, sentence.condition, region, agg(region_surprisals)))
+                i += len(region_tokens)
 
         return pd.DataFrame(ret_df, columns=["index", "item_idx", "condition", "region", "agg_surprisal"]) \
                 .set_index("index")

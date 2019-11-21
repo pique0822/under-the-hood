@@ -58,6 +58,7 @@ region_to_time = {region: time
                   for region in time_regions}
 
 graph_data["time"] = graph_data.region.transform(lambda x: region_to_time[x])
+graph_data.to_csv("graph_data.csv")
 
 g = sns.FacetGrid(data=graph_data.reset_index(), row="condition")
 g.map(sns.lineplot, "time", "agg_surprisal", "model").add_legend()
