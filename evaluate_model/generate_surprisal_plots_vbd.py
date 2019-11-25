@@ -53,13 +53,16 @@ graph_data = pd.concat(graph_data, names=["model"])
 
 # Now map regions to cross-condition time-points.
 graph_times = experiment.plot_config["times"]
-region_to_time = {region: time
-                  for time, time_regions in graph_times.items()
-                  for region in time_regions}
+region_to_time_idx = {region: time_idx
+                      for time_idx, time_regions in enumerate(graph_times.values())
+                      for region in time_regions}
 
-graph_data["time"] = graph_data.region.transform(lambda x: region_to_time[x])
+graph_data["time"] = graph_data.region.transform(lambda x: region_to_time_idx[x])
 graph_data.to_csv("graph_data.csv")
 
-g = sns.FacetGrid(data=graph_data.reset_index(), row="condition")
+g = sns.FacetGrid(data=graph_data.reset_index(), col="condition", height=10)
 g.map(sns.lineplot, "time", "agg_surprisal", "model").add_legend()
+for ax in g.axes.ravel():
+    ax.set_xticklabels(graph_times.keys())
+
 g.savefig("plot.png")

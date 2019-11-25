@@ -71,7 +71,7 @@ class Experiment(object):
                 token_idx = 0
                 extract_column_token_idx = None
 
-                for region in condition["prefix_columns"]:
+                for region in self.get_region_sequence(name):
                     region_tokens = row[region].strip().split(" ")
 
                     token_idx += len(region_tokens)
@@ -81,12 +81,20 @@ class Experiment(object):
                     prefix.extend(region_tokens)
 
                 # TODO NB hard-coded <eos>
-                sentence = prefix + [row[condition["measure_column"]].strip(), "<eos>"]
+                sentence = prefix + ["<eos>"]
                 sentence = " ".join(sentence)
 
                 yield Sentence(text=sentence, condition=name,
                                item_idx=item_idx,
                                extract_idx=extract_column_token_idx)
+
+    def get_region_sequence(self, condition):
+        """
+        Get the expected sequence of regions for stimuli in the given
+        condition.
+        """
+        condition = self.conditions[condition]
+        return condition["prefix_columns"] + [condition["measure_column"]]
 
     def collect_sentence_surprisals(self, surprisal_df, agg=sum):
         """
@@ -105,7 +113,7 @@ class Experiment(object):
 
             item = self.stimuli.loc[sentence.item_idx]
             i = 0
-            for region in self.conditions[sentence.condition]["prefix_columns"]:
+            for region in self.get_region_sequence(sentence.condition):
                 region_tokens = item[region].strip().split(" ")
                 region_surprisals = sentence_surprisals.iloc[i:i + len(region_tokens)].surprisal
                 assert len(region_tokens) == len(region_surprisals)
