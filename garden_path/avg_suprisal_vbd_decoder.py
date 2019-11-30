@@ -51,7 +51,7 @@ print(model)
 
 print('\n=== DEFINING CORPUS ===')
 corpus = data.Corpus(args.data_path)
-ntokens = corpus.dictionary.__len__()
+ntokens = len(corpus.dictionary)
 
 
 experiment = Experiment.from_yaml(args.experiment_file)
@@ -69,7 +69,7 @@ for sentence_id, surprisals in surp_df.groupby("sentence_id"):
     surprisal = list(surprisals.surprisal)[disambiguator_token_idx]
 
     # we'll average this surprisal over the preceding prefix string content
-    prefix = " ".join(list(surprisals.token)[:disambiguator_token_idx])
+    prefix = " ".join(list(surprisals.token)[:disambiguator_token_idx]).strip()
 
     prefix_counts[prefix] += 1
     prefix_to_avg[prefix] += surprisal
@@ -77,8 +77,6 @@ for sentence_id, surprisals in surp_df.groupby("sentence_id"):
 # run average
 prefix_to_avg = {prefix: total / prefix_counts[prefix]
                  for prefix, total in prefix_to_avg.items()}
-from pprint import pprint
-print(prefix_to_avg)
 
 
 results_by_condition = defaultdict(list)
@@ -95,12 +93,12 @@ for idx, row in tqdm(list(experiment.stimuli.iterrows())):
 
     for condition, metadata in experiment.conditions.items():
         # prepare sentence prefix string for lookup
-        prefix = " ".join(row[col].strip() for col in metadata["prefix_columns"])
+        prefix = " ".join(row[col].strip() for col in metadata["prefix_columns"]).strip()
 
         try:
             surprisal = prefix_to_avg[prefix]
-        except KeyError:
-            logger.warn("Missing surprisal estimate for prefix: %s", prefix)
+        except KeyError as e:
+            logger.warn("Missing surprisal estimate for prefix: %r", prefix)
             continue
 
         # from what token idx should we extract a cell state ?
