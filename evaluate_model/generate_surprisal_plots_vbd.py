@@ -37,7 +37,7 @@ surp_dfs = {
 for surgical_file in args.surgery_files:
     with surgical_file.open("rb") as surgical_f:
         surgical_data = pickle.load(surgical_f)
-        # TODO Read surgery coef and add to loop above
+        # Read surgery coef and add to loop above
         key = "surgery_%f" % surgical_data["surgery_coef"]
         surp_dfs[key] = surgical_data["results"]
 
