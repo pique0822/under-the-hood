@@ -81,7 +81,7 @@ class Experiment(object):
                     prefix.extend(region_tokens)
 
                 # TODO NB hard-coded <eos>
-                sentence = prefix + ["<eos>"]
+                sentence = [region for region in prefix if region] + ["<eos>"]
                 sentence = " ".join(sentence)
 
                 yield Sentence(text=sentence, condition=name,
