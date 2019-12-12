@@ -114,12 +114,22 @@ class Experiment(object):
             item = self.stimuli.loc[sentence.item_idx]
             i = 0
             for region in self.get_region_sequence(sentence.condition):
-                region_tokens = item[region].strip().split(" ")
+                # Prepare relevant columns for df
+                results_key = (idx, sentence.item_idx, sentence.condition, region)
+
+                region_tokens = item[region].strip()
+                if not region_tokens:
+                    # Empty region.
+                    ret_df.append(results_key + (0.,))
+                    continue
+
+                region_tokens = region_tokens.split(" ")
                 region_surprisals = sentence_surprisals.iloc[i:i + len(region_tokens)].surprisal
                 assert len(region_tokens) == len(region_surprisals)
 
-                ret_df.append((idx, sentence.item_idx, sentence.condition, region, agg(region_surprisals)))
+                ret_df.append(results_key + (agg(region_surprisals),))
                 i += len(region_tokens)
+            break
 
         return pd.DataFrame(ret_df, columns=["index", "item_idx", "condition", "region", "agg_surprisal"]) \
                 .set_index("index")
