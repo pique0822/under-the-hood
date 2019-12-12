@@ -160,37 +160,40 @@ if args.surprisalmode:
 
     results = []
 
-    for i, sentence in tqdm(list(enumerate(sentences))):
-        # Prepare for surgery.
-        surgery_idx = surgery_idxs[i] if args.do_surgery else None
+    with torch.no_grad():
+        for i, sentence in tqdm(list(enumerate(sentences))):
+            # Prepare for surgery.
+            surgery_idx = surgery_idxs[i] if args.do_surgery else None
 
-        torch.manual_seed(args.seed)
-        hidden = model.init_hidden(1)
-        input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
-        totalsurprisal = 0.0
-        firstword = sentence[0]
-        input.fill_(firstword.item())
+            torch.manual_seed(args.seed)
+            hidden = model.init_hidden(1)
+            input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
+            totalsurprisal = 0.0
+            firstword = sentence[0]
+            input.fill_(firstword.item())
 
-        results.append((i + 1, 1, dictionary.idx2word[firstword.item()], 0.))
+            results.append((i + 1, 1, dictionary.idx2word[firstword.item()], 0.))
 
-        output, hidden = model(input,hidden)
-        word_weights = output.squeeze().div(args.temperature).exp().cpu()
-        word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
-        for j, word in enumerate(sentence[1:]):
-            if j + 1 == surgery_idx:
-                # Perform surgery on hidden state.
-                L.info("Performing surgery for sentence %i at token: %s", i, word)
-                pre_hidden_norm = torch.norm(hidden[1][1][0])
-                hidden = do_surgery(hidden, surgery_decoder, args.surgery_scale)
-                L.info("Norm change: %s -> %s", pre_hidden_norm, torch.norm(hidden[1][1][0]))
-
-            word_surprisal = word_surprisals[word].item()
-            results.append((i + 1, j + 2, dictionary.idx2word[word.item()], word_surprisal))
-            input.fill_(word.item())
-            output, hidden = model(input, hidden)
-
+            output, hidden = model(input,hidden)
             word_weights = output.squeeze().div(args.temperature).exp().cpu()
             word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
+            for j, word in enumerate(sentence[1:]):
+                if j + 1 == surgery_idx:
+                    # Perform surgery on hidden state.
+                    L.info("Performing surgery for sentence %i at token: %s",
+                            i, dictionary.idx2word[word.item()])
+                    pre_hidden_norm = torch.norm(hidden[1][1][0]).item()
+                    hidden = do_surgery(hidden, surgery_decoder, args.surgery_scale)
+                    post_hidden_norm = torch.norm(hidden[1][1][0]).item()
+                    L.info("Norm change: %s -> %s", pre_hidden_norm, post_hidden_norm)
+
+                word_surprisal = word_surprisals[word].item()
+                results.append((i + 1, j + 2, dictionary.idx2word[word.item()], word_surprisal))
+                input.fill_(word.item())
+                output, hidden = model(input, hidden)
+
+                word_weights = output.squeeze().div(args.temperature).exp().cpu()
+                word_surprisals = -1*torch.log2(word_weights/sum(word_weights))
 
     results = pd.DataFrame(results, columns=["sentence_id", "token_id", "token", "surprisal"])
 
